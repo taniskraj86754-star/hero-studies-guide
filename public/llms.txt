@@ -1,0 +1,14 @@
+# Homework Hero
+
+> AI-powered homework help and study tools for students from middle school through college — step-by-step solutions, quizzes, flashcards, and study notes.
+
+Homework Hero turns any homework question into a guided learning moment. Snap a photo, paste a problem, or type a question to get worked solutions, summaries, quizzes, and notes across math, science, English, history, computer science, and more.
+
+## Pages
+
+- [Home](/): Product overview, features, subjects, and study tools.
+- [Sign in / Sign up](/auth): Create a free account or log in with email or Google.
+
+## Optional
+
+- [Dashboard](/dashboard): Authenticated student workspace for asking questions and tracking XP and streaks.
