@@ -11,9 +11,11 @@ const CTA = () => (
           <h2 className="text-4xl md:text-6xl font-extrabold leading-tight">Ready to become a Homework Hero?</h2>
           <p className="text-lg md:text-xl opacity-90">Join 120,000+ students learning smarter every day. Free to start, no credit card required.</p>
           <div className="flex flex-wrap gap-3 justify-center pt-2">
-            <Button variant="sun" size="xl">Start free <ArrowRight className="w-5 h-5" /></Button>
-            <Button variant="outline" size="xl" className="bg-white/10 border-white/30 text-primary-foreground hover:bg-white/20">
-              For teachers
+            <Button variant="sun" size="xl" asChild>
+              <a href="/auth">Start free <ArrowRight className="w-5 h-5" /></a>
+            </Button>
+            <Button variant="outline" size="xl" className="bg-white/10 border-white/30 text-primary-foreground hover:bg-white/20" asChild>
+              <a href="/auth">For teachers</a>
             </Button>
           </div>
         </div>

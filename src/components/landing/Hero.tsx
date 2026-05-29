@@ -27,11 +27,11 @@ const Hero = () => {
           </p>
 
           <div className="flex flex-wrap gap-3">
-            <Button variant="hero" size="xl">
-              Start learning free <ArrowRight className="w-5 h-5" />
+            <Button variant="hero" size="xl" asChild>
+              <a href="/auth">Start learning free <ArrowRight className="w-5 h-5" /></a>
             </Button>
-            <Button variant="outline" size="xl">
-              <Play className="w-4 h-4" /> Watch demo
+            <Button variant="outline" size="xl" asChild>
+              <a href="#features"><Play className="w-4 h-4" /> Watch demo</a>
             </Button>
           </div>
 
