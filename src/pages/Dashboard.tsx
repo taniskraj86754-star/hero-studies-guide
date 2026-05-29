@@ -8,8 +8,10 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
 import { Sparkles, LogOut, Upload, Send, Flame, Zap, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import SiteSEO from "@/components/SiteSEO";
 
 const SUBJECTS = ["Math", "Science", "English", "History", "Computer Science", "Physics", "Biology", "Languages"];
 const MODES = [
