@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import SiteSEO from "@/components/SiteSEO";
 
 const Auth = () => {
   const navigate = useNavigate();
