@@ -105,6 +105,11 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SiteSEO
+        title="Student Dashboard — Homework Hero"
+        description="Your Homework Hero dashboard: ask questions, get step-by-step AI help, and track your XP and streaks."
+        path="/dashboard"
+      />
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-background/70 border-b border-border/50">
         <div className="container flex items-center justify-between h-16">
           <a href="/" className="flex items-center gap-2 font-bold">
@@ -132,35 +137,52 @@ const Dashboard = () => {
       <main className="container py-8 grid lg:grid-cols-[1fr_320px] gap-6">
         <div className="space-y-6">
           <div>
-            <h1 className="text-3xl font-bold">Hey {profile?.display_name ?? "there"} 👋</h1>
-            <p className="text-muted-foreground">Drop a question, snap a photo, or paste your problem.</p>
+            <h1 className="text-3xl font-bold">Homework Assistant</h1>
+            <p className="text-muted-foreground">
+              Hey {profile?.display_name ?? "there"} 👋 — drop a question, snap a photo, or paste your problem.
+            </p>
           </div>
 
           <div className="bg-card rounded-[2rem] border border-border shadow-card p-6 space-y-4">
             <div className="flex flex-wrap gap-3">
-              <Select value={subject} onValueChange={setSubject}>
-                <SelectTrigger className="w-48 rounded-xl h-11"><SelectValue /></SelectTrigger>
-                <SelectContent>{SUBJECTS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-              </Select>
-              <Tabs value={mode} onValueChange={setMode}>
+              <div className="space-y-1">
+                <Label htmlFor="subject-select" className="sr-only">Subject</Label>
+                <Select value={subject} onValueChange={setSubject}>
+                  <SelectTrigger id="subject-select" aria-label="Subject" className="w-48 rounded-xl h-11"><SelectValue /></SelectTrigger>
+                  <SelectContent>{SUBJECTS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <Tabs value={mode} onValueChange={setMode} aria-label="Help mode">
                 <TabsList className="rounded-xl">
                   {MODES.map((m) => <TabsTrigger key={m.id} value={m.id} className="rounded-lg">{m.label}</TabsTrigger>)}
                 </TabsList>
               </Tabs>
             </div>
 
-            <Textarea
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              placeholder="Type your homework question here, or describe what you need help with..."
-              className="min-h-32 rounded-2xl text-base"
-            />
+            <div className="space-y-1">
+              <Label htmlFor="homework-question" className="sr-only">Your homework question</Label>
+              <Textarea
+                id="homework-question"
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                placeholder="Type your homework question here, or describe what you need help with..."
+                aria-label="Your homework question"
+                className="min-h-32 rounded-2xl text-base"
+              />
+            </div>
 
             <div className="flex items-center justify-between flex-wrap gap-3">
-              <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-primary/20 hover:bg-secondary transition-smooth text-sm font-medium">
+              <label htmlFor="homework-photo" className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-primary/20 hover:bg-secondary transition-smooth text-sm font-medium">
                 <Upload className="w-4 h-4" />
                 {imageBase64 ? "Image attached" : "Upload photo"}
-                <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
+                <input
+                  id="homework-photo"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  aria-label="Upload homework photo"
+                  onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])}
+                />
               </label>
               <Button variant="hero" size="lg" onClick={onSolve} disabled={loading}>
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
@@ -178,7 +200,7 @@ const Dashboard = () => {
         </div>
 
         <aside className="space-y-4">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Recent</h3>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Recent</h2>
           {history.length === 0 && <p className="text-sm text-muted-foreground">No history yet.</p>}
           <div className="space-y-2">
             {history.map((h) => (

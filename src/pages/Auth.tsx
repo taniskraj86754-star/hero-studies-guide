@@ -66,6 +66,11 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center gradient-soft p-4">
+      <SiteSEO
+        title={mode === "signin" ? "Sign In — Homework Hero" : "Create Account — Homework Hero"}
+        description={mode === "signin" ? "Sign in to Homework Hero to access AI homework help, quizzes, flashcards, and study notes." : "Create your free Homework Hero account to start getting AI-powered homework help and study tools."}
+        path="/auth"
+      />
       <div className="w-full max-w-md bg-card rounded-[2rem] shadow-card border border-border p-8 space-y-6">
         <Link to="/" className="flex items-center justify-center gap-2 font-bold text-xl">
           <div className="w-10 h-10 rounded-xl gradient-hero flex items-center justify-center shadow-glow">
