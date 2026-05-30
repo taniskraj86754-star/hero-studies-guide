@@ -1,12 +1,15 @@
 const subjects = [
   { name: "Math", emoji: "🧮", color: "from-violet-500/20 to-indigo-500/20" },
-  { name: "Science", emoji: "🔬", color: "from-emerald-500/20 to-teal-500/20" },
-  { name: "English", emoji: "📚", color: "from-rose-500/20 to-pink-500/20" },
-  { name: "History", emoji: "🏛️", color: "from-amber-500/20 to-orange-500/20" },
-  { name: "Computer Science", emoji: "💻", color: "from-sky-500/20 to-blue-500/20" },
   { name: "Physics", emoji: "⚛️", color: "from-fuchsia-500/20 to-purple-500/20" },
+  { name: "Chemistry", emoji: "🧪", color: "from-emerald-500/20 to-teal-500/20" },
   { name: "Biology", emoji: "🧬", color: "from-lime-500/20 to-green-500/20" },
-  { name: "Languages", emoji: "🌍", color: "from-cyan-500/20 to-blue-500/20" },
+  { name: "Social Science", emoji: "🏛️", color: "from-amber-500/20 to-orange-500/20" },
+  { name: "Computer", emoji: "💻", color: "from-sky-500/20 to-blue-500/20" },
+  { name: "General Knowledge", emoji: "🌍", color: "from-cyan-500/20 to-blue-500/20" },
+  { name: "English", emoji: "📚", color: "from-rose-500/20 to-pink-500/20" },
+  { name: "Hindi", emoji: "📖", color: "from-orange-500/20 to-red-500/20" },
+  { name: "Sanskrit", emoji: "🕉️", color: "from-yellow-500/20 to-amber-500/20" },
+  { name: "Other Languages", emoji: "🗣️", color: "from-indigo-500/20 to-violet-500/20" },
 ];
 
 const Subjects = () => (
@@ -14,9 +17,9 @@ const Subjects = () => (
     <div className="container">
       <div className="text-center max-w-2xl mx-auto mb-12">
         <h2 className="text-4xl md:text-5xl font-bold mb-4">Every subject. <span className="text-gradient">Every level.</span></h2>
-        <p className="text-lg text-muted-foreground">From algebra basics to organic chemistry — Homework Hero has you covered.</p>
+        <p className="text-lg text-muted-foreground">From algebra basics to Sanskrit shlokas — Homework Hero has you covered.</p>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
         {subjects.map((s, i) => (
           <div
             key={s.name}
