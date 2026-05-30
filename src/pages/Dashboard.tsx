@@ -11,6 +11,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Sparkles, LogOut, Upload, Send, Flame, Zap, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import AnswerRenderer from "@/components/AnswerRenderer";
 import SiteSEO from "@/components/SiteSEO";
 
 const SUBJECTS = [
@@ -208,7 +209,7 @@ const Dashboard = () => {
           {answer && (
             <div className="bg-card rounded-[2rem] border border-border shadow-card p-6 animate-fade-up">
               <h2 className="text-sm font-semibold text-primary uppercase tracking-wider mb-3">Answer</h2>
-              <div className="prose prose-sm max-w-none whitespace-pre-wrap">{answer}</div>
+              <AnswerRenderer markdown={answer} />
             </div>
           )}
         </div>
