@@ -13,7 +13,19 @@ import { Sparkles, LogOut, Upload, Send, Flame, Zap, Loader2 } from "lucide-reac
 import { toast } from "sonner";
 import SiteSEO from "@/components/SiteSEO";
 
-const SUBJECTS = ["Math", "Science", "English", "History", "Computer Science", "Physics", "Biology", "Languages"];
+const SUBJECTS = [
+  "Math",
+  "Physics",
+  "Chemistry",
+  "Biology",
+  "Social Science",
+  "Computer",
+  "General Knowledge",
+  "English",
+  "Hindi",
+  "Sanskrit",
+  "Other Languages",
+];
 const MODES = [
   { id: "solve", label: "Solve" },
   { id: "explain", label: "Explain" },
