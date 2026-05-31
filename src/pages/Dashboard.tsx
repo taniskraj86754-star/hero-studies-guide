@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Sparkles, LogOut, Upload, Send, Flame, Zap, Loader2, Coins } from "lucide-react";
+import { Sparkles, LogOut, Upload, Send, Flame, Zap, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import SiteSEO from "@/components/SiteSEO";
 
@@ -20,9 +20,6 @@ const SUBJECTS = [
   "Biology",
   "Social Science",
   "Computer",
-  "Computer Science",
-  "Information Technology",
-  "Artificial Intelligence",
   "General Knowledge",
   "English",
   "Hindi",
@@ -144,9 +141,6 @@ const Dashboard = () => {
                 <Zap className="w-4 h-4 text-primary" /> {profile?.xp ?? 0} XP
               </div>
             </div>
-            <Button variant="ghost" size="sm" asChild>
-              <a href="/creator" aria-label="Creator credits"><Coins className="w-4 h-4" /> Credits</a>
-            </Button>
             <Button variant="ghost" size="sm" onClick={async () => { await signOut(); navigate("/"); }}>
               <LogOut className="w-4 h-4" /> Sign out
             </Button>
