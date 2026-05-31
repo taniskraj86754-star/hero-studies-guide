@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Sparkles, LogOut, Upload, Send, Flame, Zap, Loader2 } from "lucide-react";
+import { Sparkles, LogOut, Upload, Send, Flame, Zap, Loader2, Coins } from "lucide-react";
 import { toast } from "sonner";
 import SiteSEO from "@/components/SiteSEO";
 
