@@ -144,6 +144,9 @@ const Dashboard = () => {
                 <Zap className="w-4 h-4 text-primary" /> {profile?.xp ?? 0} XP
               </div>
             </div>
+            <Button variant="ghost" size="sm" asChild>
+              <a href="/creator" aria-label="Creator credits"><Coins className="w-4 h-4" /> Credits</a>
+            </Button>
             <Button variant="ghost" size="sm" onClick={async () => { await signOut(); navigate("/"); }}>
               <LogOut className="w-4 h-4" /> Sign out
             </Button>
