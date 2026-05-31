@@ -104,11 +104,13 @@ const Dashboard = () => {
         .single();
       if (inserted) setHistory((h) => [inserted as any, ...h].slice(0, 10));
 
-      // award XP
+      // award credits (stored in xp column)
       if (profile) {
-        const newXp = profile.xp + 10;
+        const reward = 5;
+        const newXp = profile.xp + reward;
         await supabase.from("profiles").update({ xp: newXp }).eq("id", user!.id);
         setProfile({ ...profile, xp: newXp });
+        toast.success(`+${reward} credits earned! You now have ${newXp} credits.`);
       }
       setImageBase64(null);
     } catch (e: any) {
