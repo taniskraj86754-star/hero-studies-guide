@@ -162,6 +162,14 @@ const Dashboard = () => {
             </p>
           </div>
 
+          <div className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 to-accent/10 p-4 flex items-start gap-3">
+            <Zap className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+            <div className="text-sm">
+              <p className="font-semibold">Earn credits every time you use Homework Hero</p>
+              <p className="text-muted-foreground">Unlimited use — ask as many questions as you want, anytime. You earn +5 credits per question. Credits power smarter answers and help us keep improving the AI.</p>
+            </div>
+          </div>
+
           <div className="bg-card rounded-[2rem] border border-border shadow-card p-6 space-y-4">
             <div className="flex flex-wrap gap-3">
               <div className="space-y-1">
