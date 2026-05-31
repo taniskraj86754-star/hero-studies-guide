@@ -142,8 +142,8 @@ const Dashboard = () => {
               <div className="px-3 py-1.5 rounded-xl gradient-sun text-accent-foreground text-sm font-bold flex items-center gap-1">
                 <Flame className="w-4 h-4" /> {profile?.streak ?? 0}
               </div>
-              <div className="px-3 py-1.5 rounded-xl bg-secondary text-secondary-foreground text-sm font-bold flex items-center gap-1">
-                <Zap className="w-4 h-4 text-primary" /> {profile?.xp ?? 0} XP
+              <div className="px-3 py-1.5 rounded-xl bg-secondary text-secondary-foreground text-sm font-bold flex items-center gap-1" title="Credits earned from using Homework Hero. Unlimited use — credits help us make the AI smarter.">
+                <Zap className="w-4 h-4 text-primary" /> {profile?.xp ?? 0} Credits
               </div>
             </div>
             <Button variant="ghost" size="sm" onClick={async () => { await signOut(); navigate("/"); }}>
