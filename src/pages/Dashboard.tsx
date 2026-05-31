@@ -20,9 +20,6 @@ const SUBJECTS = [
   "Biology",
   "Social Science",
   "Computer",
-  "Computer Science",
-  "AI",
-  "IT",
   "General Knowledge",
   "English",
   "Hindi",
@@ -104,13 +101,11 @@ const Dashboard = () => {
         .single();
       if (inserted) setHistory((h) => [inserted as any, ...h].slice(0, 10));
 
-      // award credits (stored in xp column)
+      // award XP
       if (profile) {
-        const reward = 5;
-        const newXp = profile.xp + reward;
+        const newXp = profile.xp + 10;
         await supabase.from("profiles").update({ xp: newXp }).eq("id", user!.id);
         setProfile({ ...profile, xp: newXp });
-        toast.success(`+${reward} credits earned! You now have ${newXp} credits.`);
       }
       setImageBase64(null);
     } catch (e: any) {
@@ -142,8 +137,8 @@ const Dashboard = () => {
               <div className="px-3 py-1.5 rounded-xl gradient-sun text-accent-foreground text-sm font-bold flex items-center gap-1">
                 <Flame className="w-4 h-4" /> {profile?.streak ?? 0}
               </div>
-              <div className="px-3 py-1.5 rounded-xl bg-secondary text-secondary-foreground text-sm font-bold flex items-center gap-1" title="Credits earned from using Homework Hero. Unlimited use — credits help us make the AI smarter.">
-                <Zap className="w-4 h-4 text-primary" /> {profile?.xp ?? 0} Credits
+              <div className="px-3 py-1.5 rounded-xl bg-secondary text-secondary-foreground text-sm font-bold flex items-center gap-1">
+                <Zap className="w-4 h-4 text-primary" /> {profile?.xp ?? 0} XP
               </div>
             </div>
             <Button variant="ghost" size="sm" onClick={async () => { await signOut(); navigate("/"); }}>
@@ -160,14 +155,6 @@ const Dashboard = () => {
             <p className="text-muted-foreground">
               Hey {profile?.display_name ?? "there"} 👋 — drop a question, snap a photo, or paste your problem.
             </p>
-          </div>
-
-          <div className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 to-accent/10 p-4 flex items-start gap-3">
-            <Zap className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-            <div className="text-sm">
-              <p className="font-semibold">Earn credits every time you use Homework Hero</p>
-              <p className="text-muted-foreground">Unlimited use — ask as many questions as you want, anytime. You earn +5 credits per question. Credits power smarter answers and help us keep improving the AI.</p>
-            </div>
           </div>
 
           <div className="bg-card rounded-[2rem] border border-border shadow-card p-6 space-y-4">
