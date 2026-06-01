@@ -13,6 +13,7 @@ import { Sparkles, LogOut, Upload, Send, Flame, Zap, Loader2 } from "lucide-reac
 import { toast } from "sonner";
 import SiteSEO from "@/components/SiteSEO";
 import DiagramPanel from "@/components/DiagramPanel";
+import AnswerMarkdown from "@/components/AnswerMarkdown";
 
 const SUBJECTS = [
   "Math",
