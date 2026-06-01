@@ -213,7 +213,7 @@ const Dashboard = () => {
           {answer && (
             <div className="bg-card rounded-[2rem] border border-border shadow-card p-6 animate-fade-up">
               <h2 className="text-sm font-semibold text-primary uppercase tracking-wider mb-3">Answer</h2>
-              <div className="prose prose-sm max-w-none whitespace-pre-wrap">{answer}</div>
+              <AnswerMarkdown content={answer} />
             </div>
           )}
 
