@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Sparkles, LogOut, Upload, Send, Flame, Zap, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import SiteSEO from "@/components/SiteSEO";
+import DiagramPanel from "@/components/DiagramPanel";
 
 const SUBJECTS = [
   "Math",
@@ -20,6 +21,9 @@ const SUBJECTS = [
   "Biology",
   "Social Science",
   "Computer",
+  "Computer Science (165)",
+  "Artificial Intelligence (417)",
+  "Information Technology (402)",
   "General Knowledge",
   "English",
   "Hindi",
@@ -211,6 +215,8 @@ const Dashboard = () => {
               <div className="prose prose-sm max-w-none whitespace-pre-wrap">{answer}</div>
             </div>
           )}
+
+          {answer && <DiagramPanel answer={answer} />}
         </div>
 
         <aside className="space-y-4">
