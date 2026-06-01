@@ -5,6 +5,9 @@ const subjects = [
   { name: "Biology", emoji: "🧬", color: "from-lime-500/20 to-green-500/20" },
   { name: "Social Science", emoji: "🏛️", color: "from-amber-500/20 to-orange-500/20" },
   { name: "Computer", emoji: "💻", color: "from-sky-500/20 to-blue-500/20" },
+  { name: "Computer Science (165)", emoji: "🖥️", color: "from-blue-500/20 to-cyan-500/20" },
+  { name: "Artificial Intelligence (417)", emoji: "🤖", color: "from-purple-500/20 to-fuchsia-500/20" },
+  { name: "Information Technology (402)", emoji: "🌐", color: "from-teal-500/20 to-emerald-500/20" },
   { name: "General Knowledge", emoji: "🌍", color: "from-cyan-500/20 to-blue-500/20" },
   { name: "English", emoji: "📚", color: "from-rose-500/20 to-pink-500/20" },
   { name: "Hindi", emoji: "📖", color: "from-orange-500/20 to-red-500/20" },
@@ -17,7 +20,7 @@ const Subjects = () => (
     <div className="container">
       <div className="text-center max-w-2xl mx-auto mb-12">
         <h2 className="text-4xl md:text-5xl font-bold mb-4">Every subject. <span className="text-gradient">Every level.</span></h2>
-        <p className="text-lg text-muted-foreground">From algebra basics to Sanskrit shlokas — Homework Hero has you covered.</p>
+        <p className="text-lg text-muted-foreground">From algebra basics to Sanskrit shlokas, AI &amp; IT skill subjects to employability units — Homework Hero has you covered.</p>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
         {subjects.map((s, i) => (
@@ -27,7 +30,7 @@ const Subjects = () => (
             style={{ animationDelay: `${i * 50}ms` }}
           >
             <div className="text-5xl mb-3">{s.emoji}</div>
-            <p className="font-semibold">{s.name}</p>
+            <p className="font-semibold text-sm">{s.name}</p>
           </div>
         ))}
       </div>
