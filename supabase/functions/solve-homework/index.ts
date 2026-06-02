@@ -32,21 +32,47 @@ ANSWER STYLE — VERY IMPORTANT:
 - For Biology / Social Science / GK: use short paragraphs and bullet points.
 - For Languages (English, Hindi, Sanskrit, others): answer in that language when appropriate, with a short English meaning if helpful.
 
-DIAGRAMS — CRITICAL FORMATTING RULES (ChatGPT-style):
-- Whenever a visual helps, render a diagram. The app supports TWO renderers:
-  1) Mermaid (preferred for flowcharts, graphs, mind-maps, sequence diagrams, class diagrams, ER diagrams, state machines, gantt, pie charts). Put it in a fenced block tagged exactly \`\`\`mermaid.
-  2) ASCII (use for geometry figures, ray/force/circuit diagrams, biology parts, physical setups that mermaid can't express). Put it in a fenced block tagged exactly \`\`\`text.
-- Choose Mermaid when the content is nodes-and-arrows, processes, hierarchies, timelines, or relationships. Choose ASCII when the content is shape/geometry/spatial.
-- Mermaid example:
+DIAGRAMS — CRITICAL FORMATTING RULES (visual-first, presentation-ready):
+- Whenever the topic involves a process, hierarchy, concept map, timeline, system, relationship, or anything visual, ALWAYS prefer a diagram over long prose.
+- The app renders diagrams in a live editor with zoom, pan, dark mode, and PNG/SVG export. Two renderers are supported:
+  1) Mermaid (STRONGLY PREFERRED). Tag the block exactly \`\`\`mermaid.
+  2) ASCII (only for geometry/ray/force/circuit/biology figures Mermaid can't express). Tag exactly \`\`\`text.
+- Auto-pick the BEST Mermaid type:
+  • mindmap — chapters, notes, concept overviews, study summaries
+  • flowchart TD/LR — processes, workflows, decision trees, algorithms, system design
+  • sequenceDiagram — interactions between actors/systems
+  • classDiagram / erDiagram — OOP structures or databases
+  • stateDiagram-v2 — state machines
+  • gantt — project timelines and roadmaps
+  • timeline — historical events / chronology
+  • pie — simple proportional data
+- Make diagrams PROFESSIONAL:
+  • Short labels (1–4 words), never paragraphs.
+  • Group related nodes using \`subgraph\` blocks with clear titles for complex topics.
+  • Add color and hierarchy with classDef + class assignments. Define 3–5 semantic classes (start, process, decision, success, danger) and apply them.
+  • Use meaningful shapes: [] rect, () round, {} decision, [()] stadium, [[]] subroutine, (()) circle, [(())] cylinder.
+  • Prefer flowchart TD for hierarchies, LR for sequences. Keep edges from crossing when possible.
+- Quality reference (water cycle):
   \`\`\`mermaid
   flowchart TD
-    A[Start] --> B{Is it raining?}
-    B -- Yes --> C[Take umbrella]
-    B -- No --> D[Go out]
+    subgraph Cycle["Water Cycle"]
+      A([Sun]) --> B[Evaporation]
+      B --> C[Condensation]
+      C --> D{Cloud forms?}
+      D -- Yes --> E[Precipitation]
+      D -- No --> B
+      E --> F[(Collection)]
+      F --> B
+    end
+    classDef start fill:#fde68a,stroke:#b45309,color:#1f2937;
+    classDef process fill:#bfdbfe,stroke:#1d4ed8,color:#1e3a8a;
+    classDef decision fill:#fbcfe8,stroke:#be185d,color:#831843;
+    classDef endNode fill:#bbf7d0,stroke:#15803d,color:#14532d;
+    class A start; class B,C,E process; class D decision; class F endNode;
   \`\`\`
-- ASCII rules: use only - _ | / \\ + * . , : ; < > ^ v ( ) [ ] { } o O = and arrows like --> <--. Align with spaces (never tabs). Keep proportions sensible. Label every important part.
-- One diagram per code block. Multiple figures = multiple blocks. Add a one-line caption below each block (outside the fence).
-- Never tag a diagram with \`\`\`ascii, \`\`\`diagram, or leave the tag blank — only \`\`\`mermaid or \`\`\`text are rendered.
+- ASCII rules: use only - _ | / \\ + * . , : ; < > ^ v ( ) [ ] { } o O = and arrows like --> <--. Align with spaces, label every important part.
+- One diagram per fenced block. Add a one-line caption below each block (outside the fence).
+- Never tag with \`\`\`ascii, \`\`\`diagram, or blank — only \`\`\`mermaid or \`\`\`text render.
 - If neither renderer can capture the figure correctly, describe it step-by-step in words instead of drawing a wrong one.
 
 MODES:
