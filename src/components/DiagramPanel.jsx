@@ -26,8 +26,15 @@ import React, { useEffect, useRef, useState } from "react";
 export default function DiagramPanel({
   width: propWidth,
   height: propHeight,
-  nodes = [],
-  edges = [],
+  nodes = [
+    { x: 150, y: 150, label: "Start" },
+    { x: 400, y: 150, label: "Process" },
+    { x: 650, y: 150, label: "End" },
+  ],
+  edges = [
+    { x1: 210, y1: 150, x2: 340, y2: 150 },
+    { x1: 460, y1: 150, x2: 590, y2: 150 },
+  ],
   mermaidCode = "",
   background = "#ffffff",
   filename = "diagram.png",
