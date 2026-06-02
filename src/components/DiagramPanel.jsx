@@ -1,261 +1,236 @@
 import React, { useEffect, useRef, useState } from "react";
+import mermaid from "mermaid";
+import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 
 /**
- * DiagramPanel
- * Place this file at: src/components/DiagramPanel.jsx
- *
- * Props:
- *  - width, height: numbers (optional). If omitted it will size to the container.
- *  - nodes: [{ x, y, label }] optional
- *  - edges: [{ x1,y1,x2,y2 }] optional
- *  - mermaidCode: string optional — if present the component will render Mermaid output
- *  - background: CSS color for exported image (default "#fff")
- *  - filename: default export filename (default "diagram.png")
- *
+ * DiagramPanel - ChatGPT-style Markdown & Diagram Renderer
+ * 
  * Features:
- *  - responsive rendering
- *  - export PNG (open new tab or download)
- *  - export SVG download
- *  - high-DPI (devicePixelRatio) export
- *
- * Notes:
- *  - If you use mermaidCode, install mermaid: `npm install mermaid` or `yarn add mermaid`.
- *  - If you rely on a webfont, ensure fonts are loaded before exporting (otherwise PNG may show fallback fonts).
+ * - Renders markdown with code blocks
+ * - Auto-detects and renders Mermaid diagrams
+ * - Export PNG and SVG
+ * - Math support (LaTeX)
+ * - Clean, modern ChatGPT-like styling
  */
 
-export default function DiagramPanel({
-  width: propWidth,
-  height: propHeight,
-  nodes = [
-    { x: 150, y: 150, label: "Start" },
-    { x: 400, y: 150, label: "Process" },
-    { x: 650, y: 150, label: "End" },
-  ],
-  edges = [
-    { x1: 210, y1: 150, x2: 340, y2: 150 },
-    { x1: 460, y1: 150, x2: 590, y2: 150 },
-  ],
-  mermaidCode = "",
-  background = "#ffffff",
-  filename = "diagram.png",
-}) {
+const DiagramPanel = ({ content = "", onExport = null }) => {
   const containerRef = useRef(null);
-  const svgRef = useRef(null);
-  const [size, setSize] = useState({ w: propWidth || 800, h: propHeight || 600 });
-  const [mermaidLoaded, setMermaidLoaded] = useState(false);
+  const [diagramContent, setDiagramContent] = useState(content);
+  const [mermaidDiagrams, setMermaidDiagrams] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Responsive sizing when explicit width/height not provided
+  // Initialize mermaid
   useEffect(() => {
-    if (propWidth && propHeight) {
-      setSize({ w: propWidth, h: propHeight });
-      return;
-    }
-    const el = containerRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => {
-      const rect = el.getBoundingClientRect();
-      setSize({
-        w: Math.max(200, Math.round(rect.width)),
-        h: Math.max(150, Math.round(rect.height || 400)),
-      });
+    mermaid.initialize({ 
+      startOnLoad: false,
+      theme: "default",
+      securityLevel: "loose"
     });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [propWidth, propHeight]);
+  }, []);
 
-  // Render mermaid if mermaidCode is provided
+  // Render mermaid diagrams when content changes
   useEffect(() => {
-    let cancelled = false;
-    if (!mermaidCode) return;
-    (async () => {
-      try {
-        const mermaid = (await import("mermaid")).default;
-        mermaid.initialize({ startOnLoad: false });
-        // mermaid.render returns { svg, bindFunctions }
-        const id = "mermaid-diagram-" + Date.now();
-        const renderResult = await mermaid.render(id, mermaidCode);
-        if (cancelled) return;
-        if (containerRef.current) {
-          containerRef.current.innerHTML = renderResult.svg;
-          const svgEl = containerRef.current.querySelector("svg");
-          if (svgEl) {
-            svgRef.current = svgEl;
-            // Ensure width/height attributes for rasterization
-            if (!svgEl.getAttribute("width")) svgEl.setAttribute("width", size.w);
-            if (!svgEl.getAttribute("height")) svgEl.setAttribute("height", size.h);
-          }
+    if (!diagramContent) return;
+
+    setIsLoading(true);
+    const renderDiagrams = async () => {
+      const codeBlockRegex = /```mermaid\n([\s\S]*?)```/g;
+      const matches = [...diagramContent.matchAll(codeBlockRegex)];
+      
+      const diagrams = [];
+      for (const match of matches) {
+        try {
+          const id = `mermaid-${Date.now()}-${Math.random()}`;
+          const svg = await mermaid.render(id, match[1]);
+          diagrams.push({
+            id,
+            code: match[1],
+            svg: svg.svg || svg,
+          });
+        } catch (err) {
+          console.error("Mermaid render error:", err);
         }
-        setMermaidLoaded(true);
-      } catch (err) {
-        console.error("Mermaid render failed:", err);
       }
-    })();
-    return () => {
-      cancelled = true;
+      setMermaidDiagrams(diagrams);
+      setIsLoading(false);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mermaidCode]);
 
-  // Helper: serialize SVG to blob URL (with background rect and width/height)
-  const serializeSvgToBlobUrl = (svgElement, exportWidth, exportHeight, bgColor) => {
-    const clone = svgElement.cloneNode(true);
-    const xmlns = "http://www.w3.org/2000/svg";
+    renderDiagrams();
+  }, [diagramContent]);
 
-    // Add background rect so exported PNG is not transparent
-    const bg = document.createElementNS(xmlns, "rect");
-    bg.setAttribute("width", "100%");
-    bg.setAttribute("height", "100%");
-    bg.setAttribute("fill", bgColor || "#fff");
-    clone.insertBefore(bg, clone.firstChild);
+  // Custom markdown component for code blocks
+  const CustomCodeBlock = ({ inline, className, children, ...props }) => {
+    const match = /language-(\w+)/.exec(className || "");
+    const language = match ? match[1] : "";
 
-    // Ensure explicit width/height attributes
-    clone.setAttribute("width", String(exportWidth));
-    clone.setAttribute("height", String(exportHeight));
-
-    const svgString = '<?xml version="1.0" standalone="no"?>\n' + new XMLSerializer().serializeToString(clone);
-    const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
-    return URL.createObjectURL(blob);
-  };
-
-  // Export raster PNG (open in new tab or download)
-  const exportPng = async ({ outFilename = filename, openInNewTab = true, scale = 1 } = {}) => {
-    const svgEl = svgRef.current || containerRef.current?.querySelector("svg");
-    if (!svgEl) {
-      console.warn("No SVG found to export.");
-      return;
+    if (inline) {
+      return (
+        <code className="bg-gray-200 rounded px-2 py-1 text-sm font-mono">
+          {children}
+        </code>
+      );
     }
 
-    const exportW = Math.max(1, Math.round(size.w));
-    const exportH = Math.max(1, Math.round(size.h));
-
-    const url = serializeSvgToBlobUrl(svgEl, exportW, exportH, background);
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      try {
-        const dpr = window.devicePixelRatio || 1;
-        const finalScale = dpr * Math.max(1, scale);
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.round(exportW * finalScale);
-        canvas.height = Math.round(exportH * finalScale);
-        canvas.style.width = exportW + "px";
-        canvas.style.height = exportH + "px";
-        const ctx = canvas.getContext("2d");
-        ctx.scale(finalScale, finalScale);
-        ctx.fillStyle = background || "#fff";
-        ctx.fillRect(0, 0, exportW, exportH);
-        ctx.drawImage(img, 0, 0, exportW, exportH);
-
-        const pngData = canvas.toDataURL("image/png");
-        if (openInNewTab) {
-          window.open(pngData, "_blank");
-        } else {
-          const a = document.createElement("a");
-          a.download = outFilename;
-          a.href = pngData;
-          a.click();
-        }
-      } finally {
-        URL.revokeObjectURL(url);
+    // Check if it's a mermaid diagram
+    if (language === "mermaid") {
+      const diagram = mermaidDiagrams.find(
+        (d) => d.code === String(children).trim()
+      );
+      
+      if (diagram) {
+        return (
+          <div className="my-4 p-4 bg-gray-50 rounded-lg border border-gray-200 overflow-auto">
+            <div
+              dangerouslySetInnerHTML={{ __html: diagram.svg }}
+              className="flex justify-center"
+            />
+          </div>
+        );
       }
-    };
-    img.onerror = (e) => {
-      console.error("Failed to rasterize SVG:", e);
-      URL.revokeObjectURL(url);
-    };
-    img.src = url;
+    }
+
+    // Regular code block
+    return (
+      <div className="my-4 bg-gray-900 text-gray-100 rounded-lg overflow-auto p-4">
+        <pre className="font-mono text-sm leading-relaxed">
+          <code>{children}</code>
+        </pre>
+      </div>
+    );
   };
 
-  // Download serialized SVG file
-  const downloadSvg = () => {
-    const svgEl = svgRef.current || containerRef.current?.querySelector("svg");
-    if (!svgEl) return;
-    const exportW = Math.max(1, Math.round(size.w));
-    const exportH = Math.max(1, Math.round(size.h));
-    const url = serializeSvgToBlobUrl(svgEl, exportW, exportH, background);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = (filename || "diagram.png").replace(/\.png$/, ".svg");
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 3000);
+  // Export as PNG
+  const exportPng = async () => {
+    if (!containerRef.current) return;
+
+    const canvas = await html2canvas(containerRef.current, {
+      backgroundColor: "#ffffff",
+      scale: 2,
+    });
+
+    const link = document.createElement("a");
+    link.href = canvas.toDataURL("image/png");
+    link.download = "diagram.png";
+    link.click();
   };
 
-  // Simple custom SVG renderer for nodes/edges (when not using mermaid)
-  const renderCustomSvg = () => (
-    <svg
-      ref={svgRef}
-      width={size.w}
-      height={size.h}
-      viewBox={`0 0 ${size.w} ${size.h}`}
-      xmlns="http://www.w3.org/2000/svg"
-      role="img"
-      aria-label="Diagram"
-      style={{ display: "block", background }}
-    >
-      {/* edges */}
-      {edges.map((e, i) => (
-        <line
-          key={i}
-          x1={e.x1}
-          y1={e.y1}
-          x2={e.x2}
-          y2={e.y2}
-          stroke="#9aa7b5"
-          strokeWidth={2}
-          strokeLinecap="round"
-        />
-      ))}
+  // Export as SVG
+  const exportSvg = () => {
+    if (mermaidDiagrams.length === 0) return;
 
-      {/* nodes */}
-      {nodes.map((n, i) => (
-        <g key={i}>
-          <rect
-            x={n.x - 60}
-            y={n.y - 22}
-            width={120}
-            height={44}
-            rx={8}
-            fill="#f7fbff"
-            stroke="#2b6cb0"
-            strokeWidth={1.5}
-          />
-          <text
-            x={n.x}
-            y={n.y + 4}
-            textAnchor="middle"
-            fontFamily="Inter, Arial, sans-serif"
-            fontSize="14"
-            fill="#0b2747"
-          >
-            {n.label}
-          </text>
-        </g>
-      ))}
-    </svg>
-  );
+    const svgContent = mermaidDiagrams
+      .map((d) => d.svg)
+      .join("\n");
+
+    const link = document.createElement("a");
+    link.href =
+      "data:image/svg+xml;charset=utf-8," +
+      encodeURIComponent(svgContent);
+    link.download = "diagram.svg";
+    link.click();
+  };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+    <div className="flex flex-col h-full bg-white">
+      {/* Content Area */}
       <div
         ref={containerRef}
-        style={{
-          width: "100%",
-          minHeight: 200,
-          border: "1px solid #e6eef8",
-          borderRadius: 6,
-          padding: 8,
-          boxSizing: "border-box",
-        }}
+        className="flex-1 overflow-auto p-6 bg-gradient-to-b from-gray-50 to-white"
       >
-        {!mermaidCode && renderCustomSvg()}
-        {/* If mermaidCode is provided, mermaid will insert the SVG into containerRef */}
+        {isLoading && (
+          <div className="flex items-center justify-center h-32">
+            <div className="text-gray-500 flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              Rendering diagrams...
+            </div>
+          </div>
+        )}
+
+        {!isLoading && diagramContent && (
+          <div className="max-w-4xl mx-auto prose prose-sm">
+            <ReactMarkdown
+              remarkPlugins={[remarkMath]}
+              rehypePlugins={[rehypeKatex]}
+              components={{
+                code: CustomCodeBlock,
+                p: ({ children }) => (
+                  <p className="text-gray-700 leading-relaxed mb-4">{children}</p>
+                ),
+                h1: ({ children }) => (
+                  <h1 className="text-3xl font-bold text-gray-900 mb-4 mt-6">
+                    {children}
+                  </h1>
+                ),
+                h2: ({ children }) => (
+                  <h2 className="text-2xl font-bold text-gray-800 mb-3 mt-5">
+                    {children}
+                  </h2>
+                ),
+                h3: ({ children }) => (
+                  <h3 className="text-xl font-bold text-gray-700 mb-2 mt-4">
+                    {children}
+                  </h3>
+                ),
+                ul: ({ children }) => (
+                  <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
+                    {children}
+                  </ul>
+                ),
+                ol: ({ children }) => (
+                  <ol className="list-decimal list-inside text-gray-700 mb-4 space-y-2">
+                    {children}
+                  </ol>
+                ),
+                blockquote: ({ children }) => (
+                  <blockquote className="border-l-4 border-blue-500 pl-4 italic text-gray-600 my-4">
+                    {children}
+                  </blockquote>
+                ),
+                a: ({ href, children }) => (
+                  <a
+                    href={href}
+                    className="text-blue-600 hover:underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {children}
+                  </a>
+                ),
+              }}
+            >
+              {diagramContent}
+            </ReactMarkdown>
+          </div>
+        )}
+
+        {!diagramContent && (
+          <div className="flex items-center justify-center h-32 text-gray-400">
+            No content to display
+          </div>
+        )}
       </div>
 
-      <div style={{ display: "flex", gap: 8 }}>
-        <button onClick={() => exportPng({ openInNewTab: true })}>Open image in new tab</button>
-        <button onClick={() => exportPng({ openInNewTab: false })}>Download PNG</button>
-        <button onClick={downloadSvg}>Download SVG</button>
+      {/* Export Buttons */}
+      <div className="border-t border-gray-200 bg-white p-4 flex gap-2 justify-end">
+        <button
+          onClick={exportSvg}
+          disabled={mermaidDiagrams.length === 0}
+          className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 disabled:opacity-50 transition"
+        >
+          Export SVG
+        </button>
+        <button
+          onClick={exportPng}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+        >
+          Export PNG
+        </button>
       </div>
     </div>
   );
-}
+};
+
+export default DiagramPanel;
