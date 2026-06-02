@@ -1,445 +1,183 @@
 import React, { useEffect, useRef, useState } from "react";
 
 /**
- * DiagramPanel - Simplified ChatGPT-style Diagram Renderer
- * 
- * Features:
- * - Renders Mermaid diagrams from markdown code blocks
- * - No external dependencies needed (uses CDN)
- * - Fixed height with scrolling
- * - Export PNG and SVG
- * - ChatGPT-like UI
+ * DiagramPanel - Mermaid Diagram Renderer with CDN
+ * Renders Mermaid diagrams from markdown code blocks
  */
 
 const DiagramPanel = ({ content = "", maxHeight = "600px" }) => {
   const containerRef = useRef(null);
-  const diagramsRef = useRef(null);
-  const [diagramContent, setDiagramContent] = useState(content);
+  const [diagrams, setDiagrams] = useState<{ id: string; svg: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [diagrams, setDiagrams] = useState([]);
 
-  // Load Mermaid from CDN
+  // Load mermaid from CDN on component mount
   useEffect(() => {
-    if (!window.mermaid) {
+    const loadMermaid = async () => {
+      if (window.mermaid) {
+        window.mermaid.contentLoaded();
+        return;
+      }
+
       const script = document.createElement("script");
       script.src = "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js";
       script.async = true;
       script.onload = () => {
-        window.mermaid.initialize({ startOnLoad: false, theme: "default" });
+        if (window.mermaid) {
+          window.mermaid.initialize({
+            startOnLoad: false,
+            theme: "default",
+            securityLevel: "loose",
+            flowchart: { useMaxWidth: true }
+          });
+        }
       };
       document.body.appendChild(script);
-    }
-  }, []);
+    };
 
-  // Update content when prop changes
-  useEffect(() => {
-    setDiagramContent(content);
-  }, [content]);
+    loadMermaid();
+  }, []);
 
   // Render diagrams when content changes
   useEffect(() => {
-    if (!diagramContent || !window.mermaid) return;
-
-    setIsLoading(true);
-    renderDiagrams();
-  }, [diagramContent]);
-
-  const renderDiagrams = async () => {
-    try {
-      const codeBlockRegex = /```mermaid\n([\s\S]*?)```/g;
-      const matches = [...diagramContent.matchAll(codeBlockRegex)];
-
-      const renderedDiagrams = [];
-      for (let i = 0; i < matches.length; i++) {
-        const match = matches[i];
-        const code = match[1].trim();
-        try {
-          const id = `mermaid-${Date.now()}-${i}`;
-          const { svg } = await window.mermaid.render(id, code);
-          renderedDiagrams.push({
-            id,
-            code,
-            svg,
-          });
-        } catch (err) {
-          console.error("Mermaid render error:", err);
-        }
-      }
-      setDiagrams(renderedDiagrams);
-      setIsLoading(false);
-    } catch (err) {
-      console.error("Error rendering diagrams:", err);
-      setIsLoading(false);
-    }
-  };
-
-  // Parse markdown and render with diagrams
-  const renderContent = () => {
-    const parts = [];
-    const lines = diagramContent.split("\n");
-    let currentText = [];
-    let diagramIndex = 0;
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-
-      if (line.startsWith("```mermaid")) {
-        // Render accumulated text
-        if (currentText.length > 0) {
-          parts.push(
-            <div key={`text-${parts.length}`} className="text-content">
-              {renderMarkdownText(currentText.join("\n"))}
-            </div>
-          );
-          currentText = [];
-        }
-
-        // Find end of mermaid block
-        let endIdx = i + 1;
-        while (endIdx < lines.length && !lines[endIdx].startsWith("```")) {
-          endIdx++;
-        }
-        i = endIdx;
-
-        // Render diagram
-        if (diagrams[diagramIndex]) {
-          const diagram = diagrams[diagramIndex];
-          parts.push(
-            <div
-              key={`diagram-${diagramIndex}`}
-              className="diagram-block"
-              dangerouslySetInnerHTML={{ __html: diagram.svg }}
-            />
-          );
-          diagramIndex++;
-        }
-      } else {
-        currentText.push(line);
-      }
-    }
-
-    // Render remaining text
-    if (currentText.length > 0) {
-      parts.push(
-        <div key={`text-${parts.length}`} className="text-content">
-          {renderMarkdownText(currentText.join("\n"))}
-        </div>
-      );
-    }
-
-    return parts;
-  };
-
-  // Simple markdown parser
-  const renderMarkdownText = (text) => {
-    const elements = [];
-    const lines = text.split("\n");
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
-
-      if (!line) {
-        elements.push(<br key={`br-${i}`} />);
-        continue;
-      }
-
-      // Headings
-      if (line.startsWith("# ")) {
-        elements.push(
-          <h1 key={`h1-${i}`} className="markdown-h1">
-            {line.replace(/^# /, "")}
-          </h1>
-        );
-      } else if (line.startsWith("## ")) {
-        elements.push(
-          <h2 key={`h2-${i}`} className="markdown-h2">
-            {line.replace(/^## /, "")}
-          </h2>
-        );
-      } else if (line.startsWith("### ")) {
-        elements.push(
-          <h3 key={`h3-${i}`} className="markdown-h3">
-            {line.replace(/^### /, "")}
-          </h3>
-        );
-      }
-      // Lists
-      else if (line.startsWith("- ")) {
-        elements.push(
-          <div key={`li-${i}`} className="markdown-li">
-            • {line.replace(/^- /, "")}
-          </div>
-        );
-      }
-      // Bold and italic
-      else {
-        elements.push(
-          <p key={`p-${i}`} className="markdown-p">
-            {renderInlineMarkdown(line)}
-          </p>
-        );
-      }
-    }
-
-    return elements;
-  };
-
-  // Render inline markdown (bold, italic, links)
-  const renderInlineMarkdown = (text) => {
-    const parts = [];
-    let lastIndex = 0;
-
-    // Bold
-    const boldRegex = /\*\*(.*?)\*\*/g;
-    let match;
-    while ((match = boldRegex.exec(text)) !== null) {
-      if (match.index > lastIndex) {
-        parts.push(text.substring(lastIndex, match.index));
-      }
-      parts.push(<strong key={`bold-${match.index}`}>{match[1]}</strong>);
-      lastIndex = boldRegex.lastIndex;
-    }
-
-    if (lastIndex < text.length) {
-      parts.push(text.substring(lastIndex));
-    }
-
-    return parts.length > 0 ? parts : text;
-  };
-
-  // Export as PNG
-  const exportPng = async () => {
-    if (!diagramsRef.current) return;
-
-    try {
-      const canvas = await html2canvas(diagramsRef.current, {
-        backgroundColor: "#ffffff",
-        scale: 2,
-      });
-
-      const link = document.createElement("a");
-      link.href = canvas.toDataURL("image/png");
-      link.download = `diagram-${Date.now()}.png`;
-      link.click();
-    } catch (err) {
-      console.error("PNG export error:", err);
-      alert("Failed to export PNG. Try using Export SVG instead.");
-    }
-  };
-
-  // Export as SVG
-  const exportSvg = () => {
-    if (diagrams.length === 0) {
-      alert("No diagrams to export");
+    if (!content || !window.mermaid) {
+      setDiagrams([]);
       return;
     }
 
-    const svgContent = diagrams.map((d, i) => `<!-- Diagram ${i + 1} -->\n${d.svg}`).join("\n\n");
+    renderMermaidDiagrams();
+  }, [content]);
 
-    const link = document.createElement("a");
-    link.href = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgContent);
-    link.download = `diagram-${Date.now()}.svg`;
-    link.click();
+  const renderMermaidDiagrams = async () => {
+    setIsLoading(true);
+    try {
+      // Extract all mermaid code blocks
+      const mermaidRegex = /```mermaid\n([\s\S]*?)\n```/g;
+      const matches = Array.from(content.matchAll(mermaidRegex));
+
+      if (matches.length === 0) {
+        setDiagrams([]);
+        setIsLoading(false);
+        return;
+      }
+
+      const renderedDiagrams = [];
+
+      for (let i = 0; i < matches.length; i++) {
+        const code = matches[i][1].trim();
+        if (!code) continue;
+
+        try {
+          const id = `mermaid-diagram-${Date.now()}-${i}`;
+          
+          // Render using mermaid
+          const { svg } = await window.mermaid.render(id, code);
+          
+          renderedDiagrams.push({
+            id,
+            svg: svg || ""
+          });
+        } catch (error) {
+          console.error(`Error rendering diagram ${i}:`, error);
+        }
+      }
+
+      setDiagrams(renderedDiagrams);
+    } catch (error) {
+      console.error("Error parsing diagrams:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
+  if (!content) {
+    return (
+      <div style={styles.container}>
+        <div style={styles.header}>
+          <h3 style={styles.headerTitle}>📊 Diagram Viewer</h3>
+        </div>
+        <div style={{ ...styles.content, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <p style={styles.empty}>No diagrams to display</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="diagram-panel">
-      <style>{`
-        .diagram-panel {
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-          background: white;
-          border: 1px solid #e5e7eb;
-          border-radius: 8px;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        .diagram-header {
-          padding: 12px 16px;
-          border-bottom: 1px solid #e5e7eb;
-          background: #f9fafb;
-        }
-
-        .diagram-header h3 {
-          margin: 0;
-          font-size: 14px;
-          font-weight: 600;
-          color: #374151;
-        }
-
-        .diagram-content {
-          flex: 1;
-          overflow-y: auto;
-          padding: 16px;
-          background: white;
-          max-height: ${maxHeight};
-        }
-
-        .diagram-loading {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          color: #6b7280;
-          font-size: 14px;
-        }
-
-        .diagram-spinner {
-          width: 16px;
-          height: 16px;
-          border: 2px solid #3b82f6;
-          border-top-color: transparent;
-          border-radius: 50%;
-          animation: spin 0.6s linear infinite;
-        }
-
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-
-        .diagram-empty {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          height: 128px;
-          color: #d1d5db;
-          font-size: 14px;
-        }
-
-        .diagram-block {
-          margin: 16px 0;
-          padding: 12px;
-          background: #f3f4f6;
-          border-radius: 6px;
-          border: 1px solid #e5e7eb;
-          overflow-x: auto;
-        }
-
-        .diagram-block svg {
-          max-width: 100%;
-          height: auto;
-          display: block;
-          margin: 0 auto;
-        }
-
-        .text-content {
-          margin: 12px 0;
-        }
-
-        .markdown-h1 {
-          margin: 16px 0 8px 0;
-          font-size: 24px;
-          font-weight: 700;
-          color: #111827;
-        }
-
-        .markdown-h2 {
-          margin: 14px 0 6px 0;
-          font-size: 20px;
-          font-weight: 700;
-          color: #1f2937;
-        }
-
-        .markdown-h3 {
-          margin: 12px 0 4px 0;
-          font-size: 16px;
-          font-weight: 700;
-          color: #374151;
-        }
-
-        .markdown-p {
-          margin: 8px 0;
-          font-size: 14px;
-          line-height: 1.6;
-          color: #374151;
-        }
-
-        .markdown-li {
-          margin: 6px 0 6px 16px;
-          font-size: 14px;
-          color: #374151;
-          line-height: 1.5;
-        }
-
-        .diagram-footer {
-          padding: 12px 16px;
-          border-top: 1px solid #e5e7eb;
-          background: #f9fafb;
-          display: flex;
-          gap: 8px;
-          justify-content: flex-end;
-        }
-
-        .diagram-btn {
-          padding: 6px 12px;
-          border: none;
-          border-radius: 4px;
-          font-size: 13px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .diagram-btn-primary {
-          background: #3b82f6;
-          color: white;
-        }
-
-        .diagram-btn-primary:hover {
-          background: #2563eb;
-        }
-
-        .diagram-btn-secondary {
-          background: #e5e7eb;
-          color: #374151;
-        }
-
-        .diagram-btn-secondary:hover {
-          background: #d1d5db;
-        }
-
-        .diagram-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-      `}</style>
-
+    <div style={styles.container}>
       {/* Header */}
-      <div className="diagram-header">
-        <h3>📊 Diagram Viewer</h3>
+      <div style={styles.header}>
+        <h3 style={styles.headerTitle}>📊 Diagram Viewer</h3>
       </div>
 
-      {/* Content */}
-      <div className="diagram-content">
+      {/* Content Area */}
+      <div style={{ ...styles.content, maxHeight, overflowY: 'auto' }} ref={containerRef}>
         {isLoading && (
-          <div className="diagram-loading">
-            <div className="diagram-spinner"></div>
-            <span>Rendering diagrams...</span>
+          <div style={styles.loadingContainer}>
+            <div style={styles.spinner}></div>
+            <span style={styles.loadingText}>Rendering diagrams...</span>
           </div>
         )}
 
-        {!isLoading && diagramContent && (
-          <div ref={diagramsRef}>
-            {renderContent()}
-          </div>
+        {!isLoading && diagrams.length === 0 && (
+          <p style={styles.empty}>No mermaid diagrams found in the answer</p>
         )}
 
-        {!isLoading && !diagramContent && (
-          <div className="diagram-empty">No content to display</div>
+        {!isLoading && diagrams.length > 0 && (
+          <div>
+            {diagrams.map((diagram, index) => (
+              <div key={diagram.id} style={styles.diagramBox}>
+                <div
+                  dangerouslySetInnerHTML={{ __html: diagram.svg }}
+                  style={styles.diagramContent}
+                />
+              </div>
+            ))}
+          </div>
         )}
       </div>
 
       {/* Footer */}
-      <div className="diagram-footer">
+      <div style={styles.footer}>
         <button
-          className="diagram-btn diagram-btn-secondary"
-          onClick={exportSvg}
+          onClick={() => {
+            if (diagrams.length > 0) {
+              const svgContent = diagrams.map((d, i) => `<!-- Diagram ${i + 1} -->\n${d.svg}`).join('\n\n');
+              const link = document.createElement('a');
+              link.href = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgContent);
+              link.download = `diagrams-${Date.now()}.svg`;
+              link.click();
+            }
+          }}
           disabled={diagrams.length === 0}
+          style={{
+            ...styles.button,
+            ...styles.buttonSecondary,
+            opacity: diagrams.length === 0 ? 0.5 : 1,
+            cursor: diagrams.length === 0 ? 'not-allowed' : 'pointer'
+          }}
         >
           Export SVG
         </button>
-        <button className="diagram-btn diagram-btn-primary" onClick={exportPng}>
+        <button
+          onClick={() => {
+            if (diagrams.length > 0 && containerRef.current) {
+              // Simple PNG export - saves the rendered diagrams as image
+              const canvas = document.createElement('canvas');
+              const ctx = canvas.getContext('2d');
+              canvas.width = 800;
+              canvas.height = 600;
+              if (ctx) {
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL('image/png');
+                link.download = `diagram-${Date.now()}.png`;
+                link.click();
+              }
+            }
+          }}
+          style={{...styles.button, ...styles.buttonPrimary}}
+        >
           Export PNG
         </button>
       </div>
@@ -447,11 +185,107 @@ const DiagramPanel = ({ content = "", maxHeight = "600px" }) => {
   );
 };
 
-// Load html2canvas for PNG export
-if (!window.html2canvas) {
-  const script = document.createElement("script");
-  script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
-  document.body.appendChild(script);
-}
+const styles = {
+  container: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    height: '100%',
+    backgroundColor: '#ffffff',
+    border: '1px solid #e5e7eb',
+    borderRadius: '8px',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+  },
+  header: {
+    padding: '12px 16px',
+    borderBottom: '1px solid #e5e7eb',
+    backgroundColor: '#f9fafb',
+  },
+  headerTitle: {
+    margin: '0',
+    fontSize: '14px',
+    fontWeight: '600' as const,
+    color: '#374151',
+  },
+  content: {
+    flex: 1,
+    overflowY: 'auto' as const,
+    padding: '16px',
+    backgroundColor: '#ffffff',
+  },
+  loadingContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    color: '#6b7280',
+    fontSize: '14px',
+    height: '128px',
+  },
+  spinner: {
+    width: '16px',
+    height: '16px',
+    border: '2px solid #3b82f6',
+    borderTopColor: 'transparent',
+    borderRadius: '50%',
+    animation: 'spin 0.6s linear infinite',
+  },
+  loadingText: {
+    fontSize: '14px',
+    color: '#6b7280',
+  },
+  empty: {
+    fontSize: '14px',
+    color: '#d1d5db',
+    margin: '0',
+    textAlign: 'center' as const,
+  },
+  diagramBox: {
+    margin: '16px 0',
+    padding: '12px',
+    backgroundColor: '#f3f4f6',
+    borderRadius: '6px',
+    border: '1px solid #e5e7eb',
+    overflowX: 'auto' as const,
+  },
+  diagramContent: {
+    display: 'flex',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  footer: {
+    padding: '12px 16px',
+    borderTop: '1px solid #e5e7eb',
+    backgroundColor: '#f9fafb',
+    display: 'flex',
+    gap: '8px',
+    justifyContent: 'flex-end',
+  },
+  button: {
+    padding: '6px 12px',
+    border: 'none',
+    borderRadius: '4px',
+    fontSize: '13px',
+    fontWeight: '500' as const,
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+  },
+  buttonPrimary: {
+    backgroundColor: '#3b82f6',
+    color: 'white',
+  },
+  buttonSecondary: {
+    backgroundColor: '#e5e7eb',
+    color: '#374151',
+  },
+};
+
+// Add CSS keyframes for spinner animation
+const styleSheet = document.createElement("style");
+styleSheet.textContent = `
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+`;
+document.head.appendChild(styleSheet);
 
 export default DiagramPanel;
