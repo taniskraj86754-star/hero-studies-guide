@@ -1,35 +1,34 @@
 import React, { useEffect, useRef, useState } from "react";
-import mermaid from "mermaid";
-import ReactMarkdown from "react-markdown";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
-import "katex/dist/katex.min.css";
 
 /**
- * DiagramPanel - ChatGPT-style Markdown & Diagram Renderer
+ * DiagramPanel - Simplified ChatGPT-style Diagram Renderer
  * 
  * Features:
- * - Renders markdown with code blocks
- * - Auto-detects and renders Mermaid diagrams
- * - Export PNG and SVG
- * - Math support (LaTeX)
- * - Clean, modern ChatGPT-like styling
+ * - Renders Mermaid diagrams from markdown code blocks
+ * - No external dependencies needed (uses CDN)
  * - Fixed height with scrolling
+ * - Export PNG and SVG
+ * - ChatGPT-like UI
  */
 
 const DiagramPanel = ({ content = "", maxHeight = "600px" }) => {
   const containerRef = useRef(null);
+  const diagramsRef = useRef(null);
   const [diagramContent, setDiagramContent] = useState(content);
-  const [mermaidDiagrams, setMermaidDiagrams] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [diagrams, setDiagrams] = useState([]);
 
-  // Initialize mermaid
+  // Load Mermaid from CDN
   useEffect(() => {
-    mermaid.initialize({ 
-      startOnLoad: false,
-      theme: "default",
-      securityLevel: "loose"
-    });
+    if (!window.mermaid) {
+      const script = document.createElement("script");
+      script.src = "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js";
+      script.async = true;
+      script.onload = () => {
+        window.mermaid.initialize({ startOnLoad: false, theme: "default" });
+      };
+      document.body.appendChild(script);
+    }
   }, []);
 
   // Update content when prop changes
@@ -37,88 +36,185 @@ const DiagramPanel = ({ content = "", maxHeight = "600px" }) => {
     setDiagramContent(content);
   }, [content]);
 
-  // Render mermaid diagrams when content changes
+  // Render diagrams when content changes
   useEffect(() => {
-    if (!diagramContent) return;
+    if (!diagramContent || !window.mermaid) return;
 
     setIsLoading(true);
-    const renderDiagrams = async () => {
+    renderDiagrams();
+  }, [diagramContent]);
+
+  const renderDiagrams = async () => {
+    try {
       const codeBlockRegex = /```mermaid\n([\s\S]*?)```/g;
       const matches = [...diagramContent.matchAll(codeBlockRegex)];
-      
-      const diagrams = [];
-      for (const match of matches) {
+
+      const renderedDiagrams = [];
+      for (let i = 0; i < matches.length; i++) {
+        const match = matches[i];
+        const code = match[1].trim();
         try {
-          const id = `mermaid-${Date.now()}-${Math.random()}`;
-          const svg = await mermaid.render(id, match[1]);
-          diagrams.push({
+          const id = `mermaid-${Date.now()}-${i}`;
+          const { svg } = await window.mermaid.render(id, code);
+          renderedDiagrams.push({
             id,
-            code: match[1],
-            svg: svg.svg || svg,
+            code,
+            svg,
           });
         } catch (err) {
           console.error("Mermaid render error:", err);
         }
       }
-      setMermaidDiagrams(diagrams);
+      setDiagrams(renderedDiagrams);
       setIsLoading(false);
-    };
+    } catch (err) {
+      console.error("Error rendering diagrams:", err);
+      setIsLoading(false);
+    }
+  };
 
-    renderDiagrams();
-  }, [diagramContent]);
+  // Parse markdown and render with diagrams
+  const renderContent = () => {
+    const parts = [];
+    const lines = diagramContent.split("\n");
+    let currentText = [];
+    let diagramIndex = 0;
 
-  // Custom markdown component for code blocks
-  const CustomCodeBlock = ({ inline, className, children, ...props }) => {
-    const match = /language-(\w+)/.exec(className || "");
-    const language = match ? match[1] : "";
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
 
-    if (inline) {
-      return (
-        <code className="bg-gray-200 rounded px-2 py-1 text-sm font-mono">
-          {children}
-        </code>
+      if (line.startsWith("```mermaid")) {
+        // Render accumulated text
+        if (currentText.length > 0) {
+          parts.push(
+            <div key={`text-${parts.length}`} className="text-content">
+              {renderMarkdownText(currentText.join("\n"))}
+            </div>
+          );
+          currentText = [];
+        }
+
+        // Find end of mermaid block
+        let endIdx = i + 1;
+        while (endIdx < lines.length && !lines[endIdx].startsWith("```")) {
+          endIdx++;
+        }
+        i = endIdx;
+
+        // Render diagram
+        if (diagrams[diagramIndex]) {
+          const diagram = diagrams[diagramIndex];
+          parts.push(
+            <div
+              key={`diagram-${diagramIndex}`}
+              className="diagram-block"
+              dangerouslySetInnerHTML={{ __html: diagram.svg }}
+            />
+          );
+          diagramIndex++;
+        }
+      } else {
+        currentText.push(line);
+      }
+    }
+
+    // Render remaining text
+    if (currentText.length > 0) {
+      parts.push(
+        <div key={`text-${parts.length}`} className="text-content">
+          {renderMarkdownText(currentText.join("\n"))}
+        </div>
       );
     }
 
-    // Check if it's a mermaid diagram
-    if (language === "mermaid") {
-      const diagram = mermaidDiagrams.find(
-        (d) => d.code === String(children).trim()
-      );
-      
-      if (diagram) {
-        return (
-          <div className="my-4 p-4 bg-gray-50 rounded-lg border border-gray-200 overflow-x-auto max-h-96">
-            <div
-              dangerouslySetInnerHTML={{ __html: diagram.svg }}
-              className="flex justify-center"
-            />
+    return parts;
+  };
+
+  // Simple markdown parser
+  const renderMarkdownText = (text) => {
+    const elements = [];
+    const lines = text.split("\n");
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+
+      if (!line) {
+        elements.push(<br key={`br-${i}`} />);
+        continue;
+      }
+
+      // Headings
+      if (line.startsWith("# ")) {
+        elements.push(
+          <h1 key={`h1-${i}`} className="markdown-h1">
+            {line.replace(/^# /, "")}
+          </h1>
+        );
+      } else if (line.startsWith("## ")) {
+        elements.push(
+          <h2 key={`h2-${i}`} className="markdown-h2">
+            {line.replace(/^## /, "")}
+          </h2>
+        );
+      } else if (line.startsWith("### ")) {
+        elements.push(
+          <h3 key={`h3-${i}`} className="markdown-h3">
+            {line.replace(/^### /, "")}
+          </h3>
+        );
+      }
+      // Lists
+      else if (line.startsWith("- ")) {
+        elements.push(
+          <div key={`li-${i}`} className="markdown-li">
+            • {line.replace(/^- /, "")}
           </div>
+        );
+      }
+      // Bold and italic
+      else {
+        elements.push(
+          <p key={`p-${i}`} className="markdown-p">
+            {renderInlineMarkdown(line)}
+          </p>
         );
       }
     }
 
-    // Regular code block
-    return (
-      <div className="my-4 bg-gray-900 text-gray-100 rounded-lg overflow-x-auto p-4 max-h-64">
-        <pre className="font-mono text-sm leading-relaxed">
-          <code>{children}</code>
-        </pre>
-      </div>
-    );
+    return elements;
+  };
+
+  // Render inline markdown (bold, italic, links)
+  const renderInlineMarkdown = (text) => {
+    const parts = [];
+    let lastIndex = 0;
+
+    // Bold
+    const boldRegex = /\*\*(.*?)\*\*/g;
+    let match;
+    while ((match = boldRegex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index));
+      }
+      parts.push(<strong key={`bold-${match.index}`}>{match[1]}</strong>);
+      lastIndex = boldRegex.lastIndex;
+    }
+
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+
+    return parts.length > 0 ? parts : text;
   };
 
   // Export as PNG
   const exportPng = async () => {
-    if (!containerRef.current) return;
+    if (!diagramsRef.current) return;
 
     try {
-      const { default: html2canvas } = await import("html2canvas");
-      const canvas = await html2canvas(containerRef.current, {
+      const canvas = await html2canvas(diagramsRef.current, {
         backgroundColor: "#ffffff",
         scale: 2,
-        allowTaint: true,
-        useCORS: true,
       });
 
       const link = document.createElement("a");
@@ -126,136 +222,236 @@ const DiagramPanel = ({ content = "", maxHeight = "600px" }) => {
       link.download = `diagram-${Date.now()}.png`;
       link.click();
     } catch (err) {
-      console.error("Export PNG error:", err);
-      alert("Failed to export PNG");
+      console.error("PNG export error:", err);
+      alert("Failed to export PNG. Try using Export SVG instead.");
     }
   };
 
   // Export as SVG
   const exportSvg = () => {
-    if (mermaidDiagrams.length === 0) {
+    if (diagrams.length === 0) {
       alert("No diagrams to export");
       return;
     }
 
-    const svgContent = mermaidDiagrams
-      .map((d, i) => `<!-- Diagram ${i + 1} -->\n${d.svg}`)
-      .join("\n\n");
+    const svgContent = diagrams.map((d, i) => `<!-- Diagram ${i + 1} -->\n${d.svg}`).join("\n\n");
 
     const link = document.createElement("a");
-    link.href =
-      "data:image/svg+xml;charset=utf-8," +
-      encodeURIComponent(svgContent);
+    link.href = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgContent);
     link.download = `diagram-${Date.now()}.svg`;
     link.click();
   };
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg border border-gray-300 shadow-sm">
+    <div className="diagram-panel">
+      <style>{`
+        .diagram-panel {
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          background: white;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .diagram-header {
+          padding: 12px 16px;
+          border-bottom: 1px solid #e5e7eb;
+          background: #f9fafb;
+        }
+
+        .diagram-header h3 {
+          margin: 0;
+          font-size: 14px;
+          font-weight: 600;
+          color: #374151;
+        }
+
+        .diagram-content {
+          flex: 1;
+          overflow-y: auto;
+          padding: 16px;
+          background: white;
+          max-height: ${maxHeight};
+        }
+
+        .diagram-loading {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          color: #6b7280;
+          font-size: 14px;
+        }
+
+        .diagram-spinner {
+          width: 16px;
+          height: 16px;
+          border: 2px solid #3b82f6;
+          border-top-color: transparent;
+          border-radius: 50%;
+          animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        .diagram-empty {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 128px;
+          color: #d1d5db;
+          font-size: 14px;
+        }
+
+        .diagram-block {
+          margin: 16px 0;
+          padding: 12px;
+          background: #f3f4f6;
+          border-radius: 6px;
+          border: 1px solid #e5e7eb;
+          overflow-x: auto;
+        }
+
+        .diagram-block svg {
+          max-width: 100%;
+          height: auto;
+          display: block;
+          margin: 0 auto;
+        }
+
+        .text-content {
+          margin: 12px 0;
+        }
+
+        .markdown-h1 {
+          margin: 16px 0 8px 0;
+          font-size: 24px;
+          font-weight: 700;
+          color: #111827;
+        }
+
+        .markdown-h2 {
+          margin: 14px 0 6px 0;
+          font-size: 20px;
+          font-weight: 700;
+          color: #1f2937;
+        }
+
+        .markdown-h3 {
+          margin: 12px 0 4px 0;
+          font-size: 16px;
+          font-weight: 700;
+          color: #374151;
+        }
+
+        .markdown-p {
+          margin: 8px 0;
+          font-size: 14px;
+          line-height: 1.6;
+          color: #374151;
+        }
+
+        .markdown-li {
+          margin: 6px 0 6px 16px;
+          font-size: 14px;
+          color: #374151;
+          line-height: 1.5;
+        }
+
+        .diagram-footer {
+          padding: 12px 16px;
+          border-top: 1px solid #e5e7eb;
+          background: #f9fafb;
+          display: flex;
+          gap: 8px;
+          justify-content: flex-end;
+        }
+
+        .diagram-btn {
+          padding: 6px 12px;
+          border: none;
+          border-radius: 4px;
+          font-size: 13px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .diagram-btn-primary {
+          background: #3b82f6;
+          color: white;
+        }
+
+        .diagram-btn-primary:hover {
+          background: #2563eb;
+        }
+
+        .diagram-btn-secondary {
+          background: #e5e7eb;
+          color: #374151;
+        }
+
+        .diagram-btn-secondary:hover {
+          background: #d1d5db;
+        }
+
+        .diagram-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      `}</style>
+
       {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
-        <h3 className="text-sm font-semibold text-gray-700">Diagram Viewer</h3>
+      <div className="diagram-header">
+        <h3>📊 Diagram Viewer</h3>
       </div>
 
-      {/* Content Area - Fixed Height with Scroll */}
-      <div
-        ref={containerRef}
-        className="flex-1 overflow-y-auto p-4 bg-white"
-        style={{ maxHeight: maxHeight }}
-      >
+      {/* Content */}
+      <div className="diagram-content">
         {isLoading && (
-          <div className="flex items-center justify-center h-32">
-            <div className="text-gray-500 flex items-center gap-2">
-              <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-              <span>Rendering diagrams...</span>
-            </div>
+          <div className="diagram-loading">
+            <div className="diagram-spinner"></div>
+            <span>Rendering diagrams...</span>
           </div>
         )}
 
         {!isLoading && diagramContent && (
-          <div className="prose prose-sm prose-headings:text-gray-900 max-w-none">
-            <ReactMarkdown
-              remarkPlugins={[remarkMath]}
-              rehypePlugins={[rehypeKatex]}
-              components={{
-                code: CustomCodeBlock,
-                p: ({ children }) => (
-                  <p className="text-gray-700 leading-relaxed mb-3 text-sm">
-                    {children}
-                  </p>
-                ),
-                h1: ({ children }) => (
-                  <h1 className="text-2xl font-bold text-gray-900 mb-3 mt-4">
-                    {children}
-                  </h1>
-                ),
-                h2: ({ children }) => (
-                  <h2 className="text-xl font-bold text-gray-800 mb-2 mt-3">
-                    {children}
-                  </h2>
-                ),
-                h3: ({ children }) => (
-                  <h3 className="text-lg font-bold text-gray-700 mb-2 mt-2">
-                    {children}
-                  </h3>
-                ),
-                ul: ({ children }) => (
-                  <ul className="list-disc list-inside text-gray-700 mb-3 space-y-1 text-sm">
-                    {children}
-                  </ul>
-                ),
-                ol: ({ children }) => (
-                  <ol className="list-decimal list-inside text-gray-700 mb-3 space-y-1 text-sm">
-                    {children}
-                  </ol>
-                ),
-                blockquote: ({ children }) => (
-                  <blockquote className="border-l-4 border-blue-500 pl-3 italic text-gray-600 my-3 text-sm">
-                    {children}
-                  </blockquote>
-                ),
-                a: ({ href, children }) => (
-                  <a
-                    href={href}
-                    className="text-blue-600 hover:underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {children}
-                  </a>
-                ),
-              }}
-            >
-              {diagramContent}
-            </ReactMarkdown>
+          <div ref={diagramsRef}>
+            {renderContent()}
           </div>
         )}
 
-        {!diagramContent && !isLoading && (
-          <div className="flex items-center justify-center h-32 text-gray-400 text-sm">
-            No content to display
-          </div>
+        {!isLoading && !diagramContent && (
+          <div className="diagram-empty">No content to display</div>
         )}
       </div>
 
-      {/* Export Buttons */}
-      <div className="border-t border-gray-200 bg-gray-50 px-4 py-3 flex gap-2 justify-end">
+      {/* Footer */}
+      <div className="diagram-footer">
         <button
+          className="diagram-btn diagram-btn-secondary"
           onClick={exportSvg}
-          disabled={mermaidDiagrams.length === 0}
-          className="px-3 py-1.5 bg-gray-200 text-gray-800 rounded text-sm hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          disabled={diagrams.length === 0}
         >
           Export SVG
         </button>
-        <button
-          onClick={exportPng}
-          className="px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition"
-        >
+        <button className="diagram-btn diagram-btn-primary" onClick={exportPng}>
           Export PNG
         </button>
       </div>
     </div>
   );
 };
+
+// Load html2canvas for PNG export
+if (!window.html2canvas) {
+  const script = document.createElement("script");
+  script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+  document.body.appendChild(script);
+}
 
 export default DiagramPanel;
