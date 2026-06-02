@@ -191,7 +191,7 @@ const Dashboard = () => {
             </div>
 
             <div className="flex items-center justify-between flex-wrap gap-3">
-              <label htmlFor="homework-photo" className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-primary/20 hover:bg-secondary transition-smooth text-sm font-medium">
+              <label htmlFor="homework-photo" className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-primary/20 hover:bg-secondary transition-smooth text-sm">
                 <Upload className="w-4 h-4" />
                 {imageBase64 ? "Image attached" : "Upload photo"}
                 <input
@@ -217,7 +217,7 @@ const Dashboard = () => {
             </div>
           )}
 
-          {answer && <DiagramPanel answer={answer} />}
+          {answer && <DiagramPanel content={answer} maxHeight="600px" />}
         </div>
 
         <aside className="space-y-4">
