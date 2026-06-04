@@ -1,26 +1,98 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+const ALLOWED_SUBJECTS = new Set([
+  "General", "Math", "Mathematics", "Physics", "Chemistry", "Biology",
+  "English", "Hindi", "Sanskrit", "Social Science", "History", "Geography",
+  "Economics", "Civics", "GK", "Computer Science (165)",
+  "Artificial Intelligence (417)", "Information Technology (402)",
+]);
+const ALLOWED_MODES = new Set(["solve", "explain", "summary", "quiz", "notes"]);
+const MAX_QUESTION_LEN = 4000;
+const MAX_IMAGE_B64_LEN = 7_000_000; // ~5 MB binary
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { subject, mode, question, imageBase64 } = await req.json();
+    // ---- AuthN ----
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: userData, error: userErr } = await userClient.auth.getUser();
+    if (userErr || !userData?.user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const userId = userData.user.id;
+
+    // ---- Input validation ----
+    const body = await req.json().catch(() => ({}));
+    const { subject, mode, question, imageBase64 } = body ?? {};
+
+    if (subject !== undefined && subject !== null && typeof subject !== "string") {
+      return new Response(JSON.stringify({ error: "Invalid subject" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (subject && !ALLOWED_SUBJECTS.has(subject)) {
+      return new Response(JSON.stringify({ error: "Invalid subject" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (mode && (typeof mode !== "string" || !ALLOWED_MODES.has(mode))) {
+      return new Response(JSON.stringify({ error: "Invalid mode" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (question !== undefined && question !== null && typeof question !== "string") {
+      return new Response(JSON.stringify({ error: "Invalid question" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (typeof question === "string" && question.length > MAX_QUESTION_LEN) {
+      return new Response(JSON.stringify({ error: "Question too long" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (imageBase64 !== undefined && imageBase64 !== null && typeof imageBase64 !== "string") {
+      return new Response(JSON.stringify({ error: "Invalid image" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (typeof imageBase64 === "string" && imageBase64.length > MAX_IMAGE_B64_LEN) {
+      return new Response(JSON.stringify({ error: "Image too large" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     if (!question && !imageBase64) {
       return new Response(JSON.stringify({ error: "Question or image required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    const safeSubject = subject || "General";
+    const safeMode = mode || "explain";
+
     const systemPrompt = `You are Homework Hero, a patient AI tutor for students from primary school through college.
-The student has selected SUBJECT: "${subject || "General"}" and MODE: "${mode || "explain"}".
+The student has selected SUBJECT: "${safeSubject}" and MODE: "${safeMode}".
 
 STRICT SUBJECT SCOPE:
-- Only answer questions that belong to the selected subject "${subject}".
+- Only answer questions that belong to the selected subject "${safeSubject}".
 - If the question is clearly about a different subject, politely tell the student to switch the subject selector to the correct one, name what subject it actually belongs to, and do NOT solve it.
-- If the question is ambiguous, assume it belongs to "${subject}" and proceed.
+- If the question is ambiguous, assume it belongs to "${safeSubject}" and proceed.
 - For "Computer Science (165)": follow the CBSE Computer Science (Code 165) syllabus — Python programming, data structures, SQL, computer networks, etc.
 - For "Artificial Intelligence (417)": follow the CBSE AI (Code 417) skill subject syllabus. ALWAYS include the Employability Skills units when relevant (Communication Skills, Self-Management, ICT Skills, Entrepreneurial Skills, Green Skills) in addition to AI-specific units (AI Project Cycle, Data, Neural Networks, Python basics, etc.).
 - For "Information Technology (402)": follow the CBSE IT (Code 402) skill subject syllabus. ALWAYS include the Employability Skills units when relevant (Communication Skills, Self-Management, ICT Skills, Entrepreneurial Skills, Green Skills) in addition to IT-specific units (Digital Documentation, Spreadsheets, Databases, Web Applications, etc.).
@@ -105,32 +177,44 @@ Format using Markdown.`;
 
     if (!aiRes.ok) {
       const text = await aiRes.text();
+      console.error("AI API error", aiRes.status, text);
       if (aiRes.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (aiRes.status === 402) {
         return new Response(JSON.stringify({ error: "AI credits exhausted. Please add credits to continue." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      return new Response(JSON.stringify({ error: text }), {
-        status: aiRes.status,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return new Response(JSON.stringify({ error: "AI service error. Please try again." }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const data = await aiRes.json();
     const answer = data?.choices?.[0]?.message?.content ?? "";
 
-    return new Response(JSON.stringify({ answer }), {
+    // ---- Server-side XP award (+10 per successful answer) ----
+    let newXp: number | null = null;
+    try {
+      const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      const { data: prof } = await admin
+        .from("profiles").select("xp").eq("id", userId).maybeSingle();
+      const current = (prof?.xp as number | undefined) ?? 0;
+      newXp = current + 10;
+      await admin.from("profiles").update({ xp: newXp }).eq("id", userId);
+    } catch (xpErr) {
+      console.error("XP award failed", xpErr);
+    }
+
+    return new Response(JSON.stringify({ answer, xp: newXp }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), {
+    console.error("solve-homework error", e);
+    return new Response(JSON.stringify({ error: "Internal error. Please try again." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
