@@ -108,11 +108,9 @@ const Dashboard = () => {
         .single();
       if (inserted) setHistory((h) => [inserted as any, ...h].slice(0, 10));
 
-      // award XP
-      if (profile) {
-        const newXp = profile.xp + 10;
-        await supabase.from("profiles").update({ xp: newXp }).eq("id", user!.id);
-        setProfile({ ...profile, xp: newXp });
+      // XP is awarded server-side; reflect returned value if present
+      if (profile && typeof data?.xp === "number") {
+        setProfile({ ...profile, xp: data.xp });
       }
       setImageBase64(null);
     } catch (e: any) {
