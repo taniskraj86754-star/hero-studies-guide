@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      current_affairs: {
+        Row: {
+          category: string
+          created_at: string
+          fetched_at: string
+          id: string
+          published_at: string | null
+          source: string | null
+          source_url: string | null
+          summary: string | null
+          title: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          fetched_at?: string
+          id?: string
+          published_at?: string | null
+          source?: string | null
+          source_url?: string | null
+          summary?: string | null
+          title: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          fetched_at?: string
+          id?: string
+          published_at?: string | null
+          source?: string | null
+          source_url?: string | null
+          summary?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       homework_sessions: {
         Row: {
           answer: string | null

@@ -1,1 +1,4 @@
 project_id = "hcisbjazovvjcueaqbth"
+
+[functions.update-current-affairs]
+verify_jwt = false

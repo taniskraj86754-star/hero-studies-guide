@@ -13,6 +13,7 @@ import { Sparkles, LogOut, Upload, Send, Flame, Zap, Loader2 } from "lucide-reac
 import { toast } from "sonner";
 import SiteSEO from "@/components/SiteSEO";
 import DiagramPanel from "@/components/DiagramPanel";
+import CurrentAffairs from "@/components/CurrentAffairs";
 import AnswerMarkdown from "@/components/AnswerMarkdown";
 
 const SUBJECTS = [
@@ -218,6 +219,8 @@ const Dashboard = () => {
           )}
 
           {answer && diagramKeywords.test(question) && <DiagramPanel answer={answer} />}
+
+          <CurrentAffairs />
         </div>
 
         <aside className="space-y-4">
