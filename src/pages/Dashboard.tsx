@@ -219,6 +219,8 @@ const Dashboard = () => {
           )}
 
           {answer && diagramKeywords.test(question) && <DiagramPanel answer={answer} />}
+
+          <CurrentAffairs />
         </div>
 
         <aside className="space-y-4">
