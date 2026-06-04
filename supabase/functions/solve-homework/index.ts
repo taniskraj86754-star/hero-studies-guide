@@ -9,8 +9,9 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ALLOWED_SUBJECTS = new Set([
   "General", "Math", "Mathematics", "Physics", "Chemistry", "Biology",
   "English", "Hindi", "Sanskrit", "Social Science", "History", "Geography",
-  "Economics", "Civics", "GK", "Computer Science (165)",
-  "Artificial Intelligence (417)", "Information Technology (402)",
+  "Economics", "Civics", "GK", "General Knowledge", "Computer",
+  "Computer Science (165)", "Artificial Intelligence (417)",
+  "Information Technology (402)", "Other Languages",
 ]);
 const ALLOWED_MODES = new Set(["solve", "explain", "summary", "quiz", "notes"]);
 const MAX_QUESTION_LEN = 4000;
