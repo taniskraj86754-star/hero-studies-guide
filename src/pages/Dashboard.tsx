@@ -219,7 +219,7 @@ const Dashboard = () => {
             </div>
           )}
 
-          {answer && <DiagramPanel content={answer} maxHeight="600px" />}
+          {answer && diagramKeywords.test(question) && <DiagramPanel answer={answer} />}
         </div>
 
         <aside className="space-y-4">
