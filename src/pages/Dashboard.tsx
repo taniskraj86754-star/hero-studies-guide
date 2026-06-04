@@ -61,6 +61,8 @@ const Dashboard = () => {
   const [history, setHistory] = useState<Session[]>([]);
   const [profile, setProfile] = useState<{ display_name: string; xp: number; streak: number } | null>(null);
 
+  const diagramKeywords = /\b(diagram|flowchart|chart|draw|visual|mind.map|mindmap|picture|illustrate|sketch|graph|map\b|representation|flow|tree|hierarchy|timeline|roadmap|cycle|process\b|workflow|structure|overview|summary diagram|with diagram|show diagram|give diagram|make diagram|create diagram)\b/i;
+
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth", { replace: true });
   }, [user, authLoading, navigate]);
