@@ -1,0 +1,1 @@
+SELECT cron.unschedule('refresh-current-affairs-4h');

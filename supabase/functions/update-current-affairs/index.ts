@@ -3,7 +3,18 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+function isSafeHttpUrl(url: unknown): url is string {
+  if (typeof url !== "string") return false;
+  try {
+    const p = new URL(url).protocol;
+    return p === "http:" || p === "https:";
+  } catch {
+    return false;
+  }
+}
 
 // CBSE / school-exam focused queries only. Avoid celebrity gossip, crime,
 // entertainment, and routine politics — focus on what shows up in CBSE
@@ -40,6 +51,23 @@ async function searchCategory(query: string) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
+    // Require an authenticated user — prevents anonymous abuse of the paid Firecrawl API.
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: userData, error: userErr } = await userClient.auth.getUser();
+    if (userErr || !userData?.user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (!FIRECRAWL_API_KEY) {
       return new Response(JSON.stringify({ error: "FIRECRAWL_API_KEY missing" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -55,9 +83,9 @@ Deno.serve(async (req) => {
           category: cat.key,
           title: (r.title ?? "").toString().slice(0, 300),
           summary: (r.description ?? r.snippet ?? "").toString().slice(0, 600),
-          source_url: r.url ?? null,
+          source_url: isSafeHttpUrl(r.url) ? r.url : null,
           source: (() => {
-            try { return r.url ? new URL(r.url).hostname.replace(/^www\./, "") : null; }
+            try { return isSafeHttpUrl(r.url) ? new URL(r.url).hostname.replace(/^www\./, "") : null; }
             catch { return null; }
           })(),
           published_at: r.publishedDate ?? r.published_date ?? null,
