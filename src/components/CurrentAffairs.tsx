@@ -95,9 +95,11 @@ export default function CurrentAffairs() {
         </p>
       ) : (
         <ul className="space-y-3">
-          {items.map((it) => (
+          {items.map((it) => {
+            const safeUrl = it.source_url && /^https?:\/\//i.test(it.source_url) ? it.source_url : "#";
+            return (
             <li key={it.id} className="rounded-2xl border border-border p-4 hover:border-primary/40 transition-smooth">
-              <a href={it.source_url ?? "#"} target="_blank" rel="noopener noreferrer" className="block">
+              <a href={safeUrl} target="_blank" rel="noopener noreferrer" className="block">
                 <div className="flex items-start justify-between gap-3">
                   <h3 className="font-semibold text-sm leading-snug">{it.title}</h3>
                   <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
@@ -109,7 +111,8 @@ export default function CurrentAffairs() {
                 </div>
               </a>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </section>
