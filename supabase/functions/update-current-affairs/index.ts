@@ -5,13 +5,16 @@ const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+// CBSE / school-exam focused queries only. Avoid celebrity gossip, crime,
+// entertainment, and routine politics — focus on what shows up in CBSE
+// social science, science, GK, and school competitive exam papers.
 const CATEGORIES: { key: string; query: string }[] = [
-  { key: "national", query: "India top news today" },
-  { key: "international", query: "world news today" },
-  { key: "business", query: "business and economy news today India" },
-  { key: "sports", query: "sports news today" },
-  { key: "science", query: "science and technology news today" },
-  { key: "exams", query: "important current affairs for competitive exams today India" },
+  { key: "national", query: "India current affairs for CBSE school exams: government schemes, policies, constitutional amendments, supreme court judgments" },
+  { key: "international", query: "international current affairs for CBSE school exams: United Nations, summits, treaties, global organizations, India foreign relations" },
+  { key: "business", query: "Indian economy current affairs for school exams: RBI, budget, GDP, banking, economic survey, important indices" },
+  { key: "sports", query: "major sports current affairs for school GK exams: Olympics, Asian Games, World Cup winners, Khel Ratna awards, India sports achievements" },
+  { key: "science", query: "science and technology current affairs for CBSE school exams: ISRO missions, space launches, scientific discoveries, environment, climate" },
+  { key: "exams", query: "static GK and current affairs important for CBSE class 9 10 11 12 board exams and school olympiads: awards, books, appointments, days, summits" },
 ];
 
 async function searchCategory(query: string) {

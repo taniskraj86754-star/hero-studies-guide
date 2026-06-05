@@ -1,9 +1,10 @@
 import { useEffect, useId, useRef, useState } from "react";
 import mermaid from "mermaid";
 import svgPanZoom from "svg-pan-zoom";
-import { Copy, GitBranch, AlertCircle, Download, ZoomIn, ZoomOut, Maximize2, Moon, Sun, Maximize, Code2 } from "lucide-react";
+import { Copy, GitBranch, AlertCircle, Download, ZoomIn, ZoomOut, Maximize2, Moon, Sun, Maximize, Code2, Wand2, Loader2, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -270,20 +271,116 @@ const DiagramViewer = ({ diagram, index }: DiagramViewerProps) => {
 
 interface DiagramPanelProps { answer: string; }
 
+const AiImageGenerator = () => {
+  const [prompt, setPrompt] = useState("");
+  const [url, setUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [seed, setSeed] = useState(0);
+
+  const generate = () => {
+    const p = prompt.trim();
+    if (!p) {
+      toast.error("Type a prompt first");
+      return;
+    }
+    const s = Math.floor(Math.random() * 1_000_000);
+    setSeed(s);
+    setLoading(true);
+    setUrl(
+      `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=1024&height=1024&nologo=true&seed=${s}`,
+    );
+  };
+
+  const download = async () => {
+    if (!url) return;
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const u = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = u;
+      a.download = `ai-image-${seed}.png`;
+      a.click();
+      URL.revokeObjectURL(u);
+    } catch {
+      toast.error("Couldn't download");
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border border-border bg-muted/40 overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-2 bg-muted/60 border-b border-border">
+        <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+          <Wand2 className="w-3.5 h-3.5" /> AI Image
+        </span>
+        {url && !loading && (
+          <Button variant="ghost" size="sm" className="h-7 px-2" onClick={download} title="Download">
+            <Download className="w-3.5 h-3.5" />
+          </Button>
+        )}
+      </div>
+      <div className="p-4 space-y-3">
+        <div className="flex gap-2">
+          <Input
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && !loading && generate()}
+            placeholder="Describe the image you want (e.g. labelled diagram of human heart)"
+            className="rounded-xl"
+          />
+          <Button onClick={generate} disabled={loading} className="rounded-xl">
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+            <span className="ml-1.5 hidden sm:inline">Generate</span>
+          </Button>
+        </div>
+
+        <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-muted/60 border border-border flex items-center justify-center">
+          {!url && !loading && (
+            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+              <ImageIcon className="w-10 h-10 opacity-40" />
+              <p className="text-sm">Your generated image will appear here</p>
+            </div>
+          )}
+          {loading && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-muted/60 backdrop-blur-sm z-10">
+              <div className="relative">
+                <div className="w-12 h-12 rounded-full border-4 border-primary/20" />
+                <div className="absolute inset-0 w-12 h-12 rounded-full border-4 border-transparent border-t-primary animate-spin" />
+              </div>
+              <p className="text-sm text-muted-foreground animate-pulse">Painting your image…</p>
+            </div>
+          )}
+          {url && (
+            <img
+              src={url}
+              alt={prompt}
+              onLoad={() => setLoading(false)}
+              onError={() => { setLoading(false); toast.error("Image failed to load"); }}
+              className="w-full h-full object-cover"
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const DiagramPanel = ({ answer }: DiagramPanelProps) => {
   const diagrams = extractDiagrams(answer);
-  if (diagrams.length === 0) return null;
   return (
-    <div className="bg-card rounded-[2rem] border border-border shadow-card p-6 animate-fade-up">
-      <div className="flex items-center gap-2 mb-4">
+    <div className="bg-card rounded-[2rem] border border-border shadow-card p-6 animate-fade-up space-y-4">
+      <div className="flex items-center gap-2">
         <GitBranch className="w-4 h-4 text-primary" />
         <h2 className="text-sm font-semibold text-primary uppercase tracking-wider">
-          Diagrams ({diagrams.length})
+          Diagrams {diagrams.length > 0 && `(${diagrams.length})`}
         </h2>
       </div>
-      <div className="space-y-4">
-        {diagrams.map((d, i) => <DiagramViewer key={i} diagram={d} index={i} />)}
-      </div>
+      {diagrams.length > 0 && (
+        <div className="space-y-4">
+          {diagrams.map((d, i) => <DiagramViewer key={i} diagram={d} index={i} />)}
+        </div>
+      )}
+      <AiImageGenerator />
     </div>
   );
 };
