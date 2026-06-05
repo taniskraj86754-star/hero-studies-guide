@@ -1,9 +1,10 @@
 import { useEffect, useId, useRef, useState } from "react";
 import mermaid from "mermaid";
 import svgPanZoom from "svg-pan-zoom";
-import { Copy, GitBranch, AlertCircle, Download, ZoomIn, ZoomOut, Maximize2, Moon, Sun, Maximize, Code2 } from "lucide-react";
+import { Copy, GitBranch, AlertCircle, Download, ZoomIn, ZoomOut, Maximize2, Moon, Sun, Maximize, Code2, Wand2, Loader2, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
