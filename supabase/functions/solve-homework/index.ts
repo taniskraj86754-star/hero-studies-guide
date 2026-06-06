@@ -6,13 +6,8 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-const ALLOWED_SUBJECTS = new Set([
-  "General", "Math", "Mathematics", "Physics", "Chemistry", "Biology",
-  "English", "Hindi", "Sanskrit", "Social Science", "History", "Geography",
-  "Economics", "Civics", "GK", "General Knowledge", "Computer",
-  "Computer Science (165)", "Artificial Intelligence (417)",
-  "Information Technology (402)", "Other Languages",
-]);
+// Subject is free-form; we still cap its length to avoid abuse.
+const MAX_SUBJECT_LEN = 100;
 const ALLOWED_MODES = new Set(["solve", "explain", "summary", "quiz", "notes"]);
 const MAX_QUESTION_LEN = 4000;
 const MAX_IMAGE_B64_LEN = 7_000_000; // ~5 MB binary
@@ -48,7 +43,7 @@ Deno.serve(async (req) => {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (subject && !ALLOWED_SUBJECTS.has(subject)) {
+    if (subject && (subject as string).length > MAX_SUBJECT_LEN) {
       return new Response(JSON.stringify({ error: "Invalid subject" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
