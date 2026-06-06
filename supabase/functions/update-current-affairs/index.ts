@@ -53,7 +53,7 @@ async function searchCategory(query: string) {
       Authorization: `Bearer ${FIRECRAWL_API_KEY}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ query, limit: 8, tbs: "qdr:d" }),
+    body: JSON.stringify({ query, limit: 15, tbs: "qdr:w" }),
   });
   if (!res.ok) {
     const text = await res.text();
