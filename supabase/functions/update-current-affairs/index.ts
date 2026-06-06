@@ -108,7 +108,14 @@ Deno.serve(async (req) => {
           })(),
           published_at: r.publishedDate ?? r.published_date ?? null,
         }))
-        .filter((r) => r.title && r.source_url);
+        .filter((r) => {
+          if (!r.title || !r.source_url) return false;
+          const text = `${r.title} ${r.summary ?? ""}`;
+          if (BLOCK_PATTERN.test(text)) return false;
+          const isExamDomain = r.source ? EXAM_DOMAINS.some((d) => r.source!.endsWith(d)) : false;
+          // Keep only if from an exam-prep domain OR text matches exam-relevant pattern
+          return isExamDomain || EXAM_PATTERN.test(text);
+        });
 
       if (rows.length === 0) continue;
       const { error, count } = await admin
