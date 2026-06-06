@@ -19,19 +19,14 @@ function isSafeHttpUrl(url: unknown): url is string {
 // CBSE / school-exam focused queries only. Avoid celebrity gossip, crime,
 // entertainment, and routine politics — focus on what shows up in CBSE
 // social science, science, GK, and school competitive exam papers.
-// Strictly CBSE class 1–12 syllabus & GK relevant. Avoid crime, gossip,
-// entertainment, stock tips, betting, adult or political controversy content.
 const CATEGORIES: { key: string; query: string }[] = [
-  { key: "national", query: "CBSE class 1 to 12 current affairs India: NCERT syllabus related government schemes, new policies, constitutional amendments, important supreme court judgments, national awards" },
-  { key: "international", query: "CBSE class 1 to 12 GK current affairs world: United Nations, G20, summits, treaties, India foreign relations, world geography updates" },
-  { key: "business", query: "CBSE class 1 to 12 economics current affairs India: RBI announcements, Union Budget highlights, GDP, economic survey, banking schemes for students" },
-  { key: "sports", query: "CBSE class 1 to 12 sports GK current affairs: Olympics, Asian Games, Commonwealth Games, World Cup winners, Khel Ratna, Arjuna awards, India sports achievements" },
-  { key: "science", query: "CBSE class 1 to 12 science and technology current affairs: ISRO missions, space launches, scientific discoveries, environment, climate change, biodiversity" },
-  { key: "exams", query: "CBSE class 1 to 12 static GK current affairs school exams: important days, books and authors, new appointments, national and international awards, summits" },
+  { key: "national", query: "India current affairs for CBSE school exams: government schemes, policies, constitutional amendments, supreme court judgments" },
+  { key: "international", query: "international current affairs for CBSE school exams: United Nations, summits, treaties, global organizations, India foreign relations" },
+  { key: "business", query: "Indian economy current affairs for school exams: RBI, budget, GDP, banking, economic survey, important indices" },
+  { key: "sports", query: "major sports current affairs for school GK exams: Olympics, Asian Games, World Cup winners, Khel Ratna awards, India sports achievements" },
+  { key: "science", query: "science and technology current affairs for CBSE school exams: ISRO missions, space launches, scientific discoveries, environment, climate" },
+  { key: "exams", query: "static GK and current affairs important for CBSE class 9 10 11 12 board exams and school olympiads: awards, books, appointments, days, summits" },
 ];
-
-// Block titles that are clearly not school-exam appropriate.
-const BLOCKLIST = /\b(murder|rape|sex|porn|nude|killed|suicide|betting|gambl|liquor|drug bust|arrest|affair|divorce|bollywood|kardashian|stock tip|cryptocurrency price|ipo grey market|box office|crime|molest|assault|terror attack|abuse)\b/i;
 
 async function searchCategory(query: string) {
   const res = await fetch("https://api.firecrawl.dev/v2/search", {
@@ -95,7 +90,7 @@ Deno.serve(async (req) => {
           })(),
           published_at: r.publishedDate ?? r.published_date ?? null,
         }))
-        .filter((r) => r.title && r.source_url && !BLOCKLIST.test(`${r.title} ${r.summary ?? ""}`));
+        .filter((r) => r.title && r.source_url);
 
       if (rows.length === 0) continue;
       const { error, count } = await admin
