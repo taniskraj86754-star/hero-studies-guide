@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (subject && !ALLOWED_SUBJECTS.has(subject)) {
+    if (subject && (subject as string).length > MAX_SUBJECT_LEN) {
       return new Response(JSON.stringify({ error: "Invalid subject" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
