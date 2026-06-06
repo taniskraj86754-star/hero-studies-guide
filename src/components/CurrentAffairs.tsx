@@ -70,7 +70,7 @@ export default function CurrentAffairs() {
           </div>
           <div>
             <h2 className="font-bold">Current Affairs</h2>
-            <p className="text-xs text-muted-foreground">Auto-updated every 4 hours</p>
+            <p className="text-xs text-muted-foreground">CBSE GK · Class 1–12 exam relevant</p>
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={refresh} disabled={refreshing}>
