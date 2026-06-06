@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
           })(),
           published_at: r.publishedDate ?? r.published_date ?? null,
         }))
-        .filter((r) => r.title && r.source_url);
+        .filter((r) => r.title && r.source_url && !BLOCKLIST.test(`${r.title} ${r.summary ?? ""}`));
 
       if (rows.length === 0) continue;
       const { error, count } = await admin
