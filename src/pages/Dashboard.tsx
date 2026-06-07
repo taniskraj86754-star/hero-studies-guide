@@ -16,7 +16,6 @@ import DiagramPanel from "@/components/DiagramPanel";
 import CurrentAffairs from "@/components/CurrentAffairs";
 import AnswerMarkdown from "@/components/AnswerMarkdown";
 import { useDictation, useTTS, stripForSpeech } from "@/hooks/useSpeech";
-import AnswerMarkdown from "@/components/AnswerMarkdown";
 
 const SUBJECTS = [
   // Primary (1–5)
