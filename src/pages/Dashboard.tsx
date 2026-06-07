@@ -246,16 +246,31 @@ const Dashboard = () => {
               </Tabs>
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-1 relative">
               <Label htmlFor="homework-question" className="sr-only">Your homework question</Label>
               <Textarea
                 id="homework-question"
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
-                placeholder="Type your homework question here, or describe what you need help with..."
+                placeholder="Type your homework question here, dictate with the mic, or describe what you need help with..."
                 aria-label="Your homework question"
-                className="min-h-32 rounded-2xl text-base"
+                className="min-h-32 rounded-2xl text-base pr-14"
               />
+              {dictation.supported && (
+                <button
+                  type="button"
+                  onClick={() => (dictation.listening ? dictation.stop() : dictation.start(speechLang))}
+                  aria-label={dictation.listening ? "Stop dictation" : "Start voice dictation"}
+                  title={dictation.listening ? "Stop dictation" : "Voice dictation"}
+                  className={`absolute right-3 bottom-3 w-10 h-10 rounded-full flex items-center justify-center transition-smooth ${
+                    dictation.listening
+                      ? "bg-destructive text-destructive-foreground animate-pulse shadow-glow"
+                      : "bg-primary/10 text-primary hover:bg-primary/20"
+                  }`}
+                >
+                  {dictation.listening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                </button>
+              )}
             </div>
 
             <div className="flex items-center justify-between flex-wrap gap-3">
