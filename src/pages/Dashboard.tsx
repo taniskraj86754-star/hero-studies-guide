@@ -330,21 +330,69 @@ const Dashboard = () => {
 
           {answer && (
             <div className="bg-card rounded-[2rem] border border-border shadow-card p-6 animate-fade-up">
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
                 <h2 className="text-sm font-semibold text-primary uppercase tracking-wider">Answer</h2>
                 {tts.supported && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      tts.speaking ? tts.stop() : tts.speak(stripForSpeech(answer), speechLang)
-                    }
-                    className="rounded-xl gap-2"
-                    aria-label={tts.speaking ? "Stop reading" : "Listen to the answer"}
-                  >
-                    {tts.speaking ? <Square className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                    {tts.speaking ? "Stop" : "Listen"}
-                  </Button>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Select
+                      value={ttsLang}
+                      onValueChange={(v) => {
+                        setTtsLang(v);
+                        setTtsVoiceURI("auto");
+                      }}
+                    >
+                      <SelectTrigger aria-label="Pronunciation language" className="w-44 h-9 rounded-xl text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {langOptions.map((l) => (
+                          <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={ttsVoiceURI} onValueChange={setTtsVoiceURI}>
+                      <SelectTrigger aria-label="Pronunciation voice" className="w-44 h-9 rounded-xl text-xs">
+                        <SelectValue placeholder="Voice" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="auto">Default voice</SelectItem>
+                        {matchingVoices.map((v) => (
+                          <SelectItem key={v.voiceURI} value={v.voiceURI}>
+                            {v.name} ({v.lang})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={String(ttsRate)} onValueChange={(v) => setTtsRate(Number(v))}>
+                      <SelectTrigger aria-label="Speech rate" className="w-20 h-9 rounded-xl text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[0.75, 0.9, 1, 1.1, 1.25, 1.5].map((r) => (
+                          <SelectItem key={r} value={String(r)}>{r}x</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        tts.speaking
+                          ? tts.stop()
+                          : tts.speak(
+                              stripForSpeech(answer),
+                              effectiveLang,
+                              ttsVoiceURI === "auto" ? undefined : ttsVoiceURI,
+                              ttsRate,
+                            )
+                      }
+                      className="rounded-xl gap-2"
+                      aria-label={tts.speaking ? "Stop reading" : "Listen to the answer"}
+                    >
+                      {tts.speaking ? <Square className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                      {tts.speaking ? "Stop" : "Listen"}
+                    </Button>
+                  </div>
                 )}
               </div>
               <AnswerMarkdown content={answer} />
