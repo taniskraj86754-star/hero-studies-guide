@@ -106,6 +106,29 @@ const Dashboard = () => {
   const [history, setHistory] = useState<Session[]>([]);
   const [profile, setProfile] = useState<{ display_name: string; xp: number; streak: number } | null>(null);
 
+  // Voice dictation + pronunciation
+  const dictation = useDictation((text) => setQuestion(text));
+  const tts = useTTS();
+  const speechLang = (() => {
+    const s = subject.toLowerCase();
+    if (s.includes("hindi")) return "hi-IN";
+    if (s.includes("sanskrit")) return "sa-IN";
+    if (s.includes("tamil")) return "ta-IN";
+    if (s.includes("telugu")) return "te-IN";
+    if (s.includes("bengali")) return "bn-IN";
+    if (s.includes("marathi")) return "mr-IN";
+    if (s.includes("gujarati")) return "gu-IN";
+    if (s.includes("kannada")) return "kn-IN";
+    if (s.includes("malayalam")) return "ml-IN";
+    if (s.includes("punjabi")) return "pa-IN";
+    if (s.includes("urdu")) return "ur-IN";
+    if (s.includes("french")) return "fr-FR";
+    if (s.includes("german")) return "de-DE";
+    if (s.includes("spanish")) return "es-ES";
+    if (s.includes("japanese")) return "ja-JP";
+    return "en-IN";
+  })();
+
   const diagramKeywords = /\b(diagram|flowchart|chart|draw|visual|mind.map|mindmap|picture|illustrate|sketch|graph|map\b|representation|flow|tree|hierarchy|timeline|roadmap|cycle|process\b|workflow|structure|overview|summary diagram|with diagram|show diagram|give diagram|make diagram|create diagram)\b/i;
 
   useEffect(() => {
