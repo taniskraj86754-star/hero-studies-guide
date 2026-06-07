@@ -109,7 +109,11 @@ const Dashboard = () => {
   // Voice dictation + pronunciation
   const dictation = useDictation((text) => setQuestion(text));
   const tts = useTTS();
-  const speechLang = (() => {
+  const [ttsLang, setTtsLang] = useState<string>("auto");
+  const [ttsVoiceURI, setTtsVoiceURI] = useState<string>("auto");
+  const [ttsRate, setTtsRate] = useState<number>(1);
+
+  const autoLang = (() => {
     const s = subject.toLowerCase();
     if (s.includes("hindi")) return "hi-IN";
     if (s.includes("sanskrit")) return "sa-IN";
@@ -128,6 +132,37 @@ const Dashboard = () => {
     if (s.includes("japanese")) return "ja-JP";
     return "en-IN";
   })();
+  const effectiveLang = ttsLang === "auto" ? autoLang : ttsLang;
+  const speechLang = effectiveLang; // backward-compat for dictation
+
+  const PRESET_LANGS: { code: string; label: string }[] = [
+    { code: "en-IN", label: "English (India)" },
+    { code: "en-US", label: "English (US)" },
+    { code: "en-GB", label: "English (UK)" },
+    { code: "hi-IN", label: "Hindi" },
+    { code: "sa-IN", label: "Sanskrit" },
+    { code: "ta-IN", label: "Tamil" },
+    { code: "te-IN", label: "Telugu" },
+    { code: "bn-IN", label: "Bengali" },
+    { code: "mr-IN", label: "Marathi" },
+    { code: "gu-IN", label: "Gujarati" },
+    { code: "kn-IN", label: "Kannada" },
+    { code: "ml-IN", label: "Malayalam" },
+    { code: "pa-IN", label: "Punjabi" },
+    { code: "ur-IN", label: "Urdu" },
+    { code: "fr-FR", label: "French" },
+    { code: "de-DE", label: "German" },
+    { code: "es-ES", label: "Spanish" },
+    { code: "ja-JP", label: "Japanese" },
+  ];
+  const voiceLangs = new Set(tts.voices.map((v) => v.lang));
+  const langOptions = [
+    { code: "auto", label: `Auto (subject: ${autoLang})` },
+    ...PRESET_LANGS.filter((l) => voiceLangs.size === 0 || voiceLangs.has(l.code)),
+  ];
+  const matchingVoices = tts.voices.filter(
+    (v) => v.lang === effectiveLang || v.lang.startsWith(effectiveLang.split("-")[0]),
+  );
 
   const diagramKeywords = /\b(diagram|flowchart|chart|draw|visual|mind.map|mindmap|picture|illustrate|sketch|graph|map\b|representation|flow|tree|hierarchy|timeline|roadmap|cycle|process\b|workflow|structure|overview|summary diagram|with diagram|show diagram|give diagram|make diagram|create diagram)\b/i;
 
