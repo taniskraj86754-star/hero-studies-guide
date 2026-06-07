@@ -295,7 +295,23 @@ const Dashboard = () => {
 
           {answer && (
             <div className="bg-card rounded-[2rem] border border-border shadow-card p-6 animate-fade-up">
-              <h2 className="text-sm font-semibold text-primary uppercase tracking-wider mb-3">Answer</h2>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-semibold text-primary uppercase tracking-wider">Answer</h2>
+                {tts.supported && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      tts.speaking ? tts.stop() : tts.speak(stripForSpeech(answer), speechLang)
+                    }
+                    className="rounded-xl gap-2"
+                    aria-label={tts.speaking ? "Stop reading" : "Listen to the answer"}
+                  >
+                    {tts.speaking ? <Square className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                    {tts.speaking ? "Stop" : "Listen"}
+                  </Button>
+                )}
+              </div>
               <AnswerMarkdown content={answer} />
             </div>
           )}
