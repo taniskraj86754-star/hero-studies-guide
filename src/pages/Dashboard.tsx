@@ -9,11 +9,12 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Sparkles, LogOut, Upload, Send, Flame, Zap, Loader2 } from "lucide-react";
+import { Sparkles, LogOut, Upload, Send, Flame, Zap, Loader2, Mic, MicOff, Volume2, Square } from "lucide-react";
 import { toast } from "sonner";
 import SiteSEO from "@/components/SiteSEO";
 import DiagramPanel from "@/components/DiagramPanel";
 import CurrentAffairs from "@/components/CurrentAffairs";
+import { useDictation, useTTS, stripForSpeech } from "@/hooks/useSpeech";
 import AnswerMarkdown from "@/components/AnswerMarkdown";
 
 const SUBJECTS = [
