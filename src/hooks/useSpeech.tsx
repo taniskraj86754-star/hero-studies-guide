@@ -50,20 +50,38 @@ export function useDictation(onResult: (text: string) => void) {
 // ---------- Speech Synthesis (Pronunciation) ----------
 export function useTTS() {
   const [speaking, setSpeaking] = useState(false);
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const supported = typeof window !== "undefined" && "speechSynthesis" in window;
 
-  const speak = useCallback((text: string, lang = "en-IN") => {
-    if (!supported || !text) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = lang;
-    u.rate = 1;
-    u.pitch = 1;
-    u.onend = () => setSpeaking(false);
-    u.onerror = () => setSpeaking(false);
-    setSpeaking(true);
-    window.speechSynthesis.speak(u);
+  useEffect(() => {
+    if (!supported) return;
+    const load = () => setVoices(window.speechSynthesis.getVoices());
+    load();
+    window.speechSynthesis.onvoiceschanged = load;
+    return () => {
+      window.speechSynthesis.onvoiceschanged = null;
+    };
   }, [supported]);
+
+  const speak = useCallback(
+    (text: string, lang = "en-IN", voiceURI?: string, rate = 1) => {
+      if (!supported || !text) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = lang;
+      const v = voiceURI
+        ? window.speechSynthesis.getVoices().find((x) => x.voiceURI === voiceURI)
+        : undefined;
+      if (v) u.voice = v;
+      u.rate = rate;
+      u.pitch = 1;
+      u.onend = () => setSpeaking(false);
+      u.onerror = () => setSpeaking(false);
+      setSpeaking(true);
+      window.speechSynthesis.speak(u);
+    },
+    [supported],
+  );
 
   const stop = useCallback(() => {
     if (!supported) return;
@@ -71,7 +89,7 @@ export function useTTS() {
     setSpeaking(false);
   }, [supported]);
 
-  return { speak, stop, speaking, supported };
+  return { speak, stop, speaking, supported, voices };
 }
 
 // Strip markdown/code fences/mermaid for cleaner spoken output
