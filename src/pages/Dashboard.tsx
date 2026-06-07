@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import SiteSEO from "@/components/SiteSEO";
 import DiagramPanel from "@/components/DiagramPanel";
 import CurrentAffairs from "@/components/CurrentAffairs";
+import AnswerMarkdown from "@/components/AnswerMarkdown";
 import { useDictation, useTTS, stripForSpeech } from "@/hooks/useSpeech";
 import AnswerMarkdown from "@/components/AnswerMarkdown";
 
