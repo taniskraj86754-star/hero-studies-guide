@@ -9,12 +9,13 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Sparkles, LogOut, Upload, Send, Flame, Zap, Loader2 } from "lucide-react";
+import { Sparkles, LogOut, Upload, Send, Flame, Zap, Loader2, Mic, MicOff, Volume2, Square } from "lucide-react";
 import { toast } from "sonner";
 import SiteSEO from "@/components/SiteSEO";
 import DiagramPanel from "@/components/DiagramPanel";
 import CurrentAffairs from "@/components/CurrentAffairs";
 import AnswerMarkdown from "@/components/AnswerMarkdown";
+import { useDictation, useTTS, stripForSpeech } from "@/hooks/useSpeech";
 
 const SUBJECTS = [
   // Primary (1–5)
@@ -104,6 +105,29 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<Session[]>([]);
   const [profile, setProfile] = useState<{ display_name: string; xp: number; streak: number } | null>(null);
+
+  // Voice dictation + pronunciation
+  const dictation = useDictation((text) => setQuestion(text));
+  const tts = useTTS();
+  const speechLang = (() => {
+    const s = subject.toLowerCase();
+    if (s.includes("hindi")) return "hi-IN";
+    if (s.includes("sanskrit")) return "sa-IN";
+    if (s.includes("tamil")) return "ta-IN";
+    if (s.includes("telugu")) return "te-IN";
+    if (s.includes("bengali")) return "bn-IN";
+    if (s.includes("marathi")) return "mr-IN";
+    if (s.includes("gujarati")) return "gu-IN";
+    if (s.includes("kannada")) return "kn-IN";
+    if (s.includes("malayalam")) return "ml-IN";
+    if (s.includes("punjabi")) return "pa-IN";
+    if (s.includes("urdu")) return "ur-IN";
+    if (s.includes("french")) return "fr-FR";
+    if (s.includes("german")) return "de-DE";
+    if (s.includes("spanish")) return "es-ES";
+    if (s.includes("japanese")) return "ja-JP";
+    return "en-IN";
+  })();
 
   const diagramKeywords = /\b(diagram|flowchart|chart|draw|visual|mind.map|mindmap|picture|illustrate|sketch|graph|map\b|representation|flow|tree|hierarchy|timeline|roadmap|cycle|process\b|workflow|structure|overview|summary diagram|with diagram|show diagram|give diagram|make diagram|create diagram)\b/i;
 
@@ -222,16 +246,31 @@ const Dashboard = () => {
               </Tabs>
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-1 relative">
               <Label htmlFor="homework-question" className="sr-only">Your homework question</Label>
               <Textarea
                 id="homework-question"
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
-                placeholder="Type your homework question here, or describe what you need help with..."
+                placeholder="Type your homework question here, dictate with the mic, or describe what you need help with..."
                 aria-label="Your homework question"
-                className="min-h-32 rounded-2xl text-base"
+                className="min-h-32 rounded-2xl text-base pr-14"
               />
+              {dictation.supported && (
+                <button
+                  type="button"
+                  onClick={() => (dictation.listening ? dictation.stop() : dictation.start(speechLang))}
+                  aria-label={dictation.listening ? "Stop dictation" : "Start voice dictation"}
+                  title={dictation.listening ? "Stop dictation" : "Voice dictation"}
+                  className={`absolute right-3 bottom-3 w-10 h-10 rounded-full flex items-center justify-center transition-smooth ${
+                    dictation.listening
+                      ? "bg-destructive text-destructive-foreground animate-pulse shadow-glow"
+                      : "bg-primary/10 text-primary hover:bg-primary/20"
+                  }`}
+                >
+                  {dictation.listening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                </button>
+              )}
             </div>
 
             <div className="flex items-center justify-between flex-wrap gap-3">
@@ -256,7 +295,23 @@ const Dashboard = () => {
 
           {answer && (
             <div className="bg-card rounded-[2rem] border border-border shadow-card p-6 animate-fade-up">
-              <h2 className="text-sm font-semibold text-primary uppercase tracking-wider mb-3">Answer</h2>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-semibold text-primary uppercase tracking-wider">Answer</h2>
+                {tts.supported && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      tts.speaking ? tts.stop() : tts.speak(stripForSpeech(answer), speechLang)
+                    }
+                    className="rounded-xl gap-2"
+                    aria-label={tts.speaking ? "Stop reading" : "Listen to the answer"}
+                  >
+                    {tts.speaking ? <Square className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                    {tts.speaking ? "Stop" : "Listen"}
+                  </Button>
+                )}
+              </div>
               <AnswerMarkdown content={answer} />
             </div>
           )}
