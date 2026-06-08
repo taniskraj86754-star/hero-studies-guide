@@ -399,7 +399,13 @@ const Dashboard = () => {
             </div>
           )}
 
-          {answer && diagramKeywords.test(question) && <DiagramPanel answer={answer} />}
+          {answer && diagramKeywords.test(question) && (
+            <div className="flex flex-wrap gap-2">
+              {Array.from(answer.matchAll(/!\[([^\]]*)\]\(([^)]+)\)/g)).map((m, i) => (
+                <DiagramPanel key={i} title={m[1] || `Diagram ${i + 1}`} imageUrl={m[2]} />
+              ))}
+            </div>
+          )}
 
           <CurrentAffairs />
         </div>

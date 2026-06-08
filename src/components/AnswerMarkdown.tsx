@@ -5,9 +5,8 @@ interface AnswerMarkdownProps {
   content: string;
 }
 
-// Renders the assistant answer as Markdown, but hides fenced code blocks that
-// the Diagram Panel already renders (mermaid + ASCII text/diagram blocks) so
-// they don't appear twice.
+// Renders the assistant answer as Markdown, hiding diagram/code blocks that
+// should be shown in their own panels so they don't appear twice.
 const isDiagramBlock = (lang?: string, code?: string) => {
   const l = (lang || "").toLowerCase();
   if (l === "mermaid") return true;
