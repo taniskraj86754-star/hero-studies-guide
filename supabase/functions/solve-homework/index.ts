@@ -6,10 +6,60 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-// Subject is free-form; we still cap its length to avoid abuse.
-const MAX_SUBJECT_LEN = 100;
+// Subject allowlist — mirrors the frontend SUBJECTS array. Prevents prompt
+// injection via arbitrary text being interpolated into the system prompt.
+const ALLOWED_SUBJECTS = new Set<string>([
+  "General",
+  // Primary (1–5)
+  "Environmental Studies (EVS)",
+  "General Knowledge",
+  "Moral Science",
+  // Core academics (6–12)
+  "Mathematics",
+  "Applied Mathematics",
+  "Math",
+  "Science",
+  "Physics",
+  "Chemistry",
+  "Biology",
+  "Biotechnology",
+  "Social Science",
+  "History",
+  "Geography",
+  "Political Science",
+  "Economics",
+  "Sociology",
+  "Psychology",
+  "Philosophy",
+  // Commerce
+  "Accountancy",
+  "Business Studies",
+  "Entrepreneurship",
+  "Legal Studies",
+  // Computing & skill (CBSE codes)
+  "Computer",
+  "Computer Science",
+  "Computer Science (083)",
+  "Computer Science (165)",
+  "Informatics Practices (065)",
+  "Artificial Intelligence (417)",
+  "Artificial Intelligence (417/843)",
+  "Information Technology (402)",
+  "Web Application (803)",
+  "Data Science (844)",
+  // Arts & life skills
+  "Fine Arts",
+  "Home Science",
+  "Physical Education",
+  "Engineering Graphics",
+  // Languages
+  "English", "Hindi", "Sanskrit", "Urdu", "Punjabi", "Tamil", "Telugu",
+  "Bengali", "Marathi", "Gujarati", "Kannada", "Malayalam", "Odia",
+  "Assamese", "French", "German", "Spanish", "Japanese",
+]);
 const ALLOWED_MODES = new Set(["solve", "explain", "summary", "quiz", "notes"]);
 const MAX_QUESTION_LEN = 4000;
+
 const MAX_IMAGE_B64_LEN = 7_000_000; // ~5 MB binary
 
 Deno.serve(async (req) => {
