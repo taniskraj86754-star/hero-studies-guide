@@ -78,34 +78,40 @@ export default function DiagramPanel({ initialPrompt = "" }: DiagramPanelProps) 
       </div>
 
       <div className="relative rounded-2xl border border-border bg-muted/40 min-h-[280px] flex items-center justify-center overflow-hidden">
-        {loading && (
-          <div className="flex flex-col items-center gap-3 py-10 text-muted-foreground">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <p className="text-sm">Creating your diagram…</p>
-          </div>
-        )}
-        {!loading && !imgUrl && (
+        {!imgUrl && !loading && (
           <div className="flex flex-col items-center gap-2 py-10 text-muted-foreground text-sm">
             <ImageIcon className="w-8 h-8 opacity-40" />
             <p>Your generated diagram will appear here.</p>
           </div>
         )}
-        {!loading && imgUrl && (
+        {imgUrl && (
           <button
             type="button"
-            onClick={() => setOpen(true)}
+            onClick={() => !loading && setOpen(true)}
             className="block w-full"
             aria-label="Open diagram fullscreen"
           >
             <img
+              key={imgUrl}
               src={imgUrl}
               alt={prompt}
-              className="w-full h-auto object-contain rounded-2xl transition-smooth hover:opacity-95"
+              onLoad={() => setLoading(false)}
+              onError={() => setLoading(false)}
+              className={`w-full h-auto object-contain rounded-2xl transition-smooth ${
+                loading ? "opacity-30 blur-sm" : "hover:opacity-95"
+              }`}
               style={{ imageRendering: "auto" }}
             />
           </button>
         )}
+        {loading && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/60 backdrop-blur-sm">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Creating your diagram…</p>
+          </div>
+        )}
       </div>
+
 
       {imgUrl && !loading && (
         <div className="flex gap-2 justify-end">
