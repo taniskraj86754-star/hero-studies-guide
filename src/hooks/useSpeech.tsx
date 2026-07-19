@@ -105,16 +105,18 @@ const ABBREVIATIONS: Array<[RegExp, string]> = [
   [/\bProf\.\b/g, "Professor"],
   [/\bSt\.\b/g, "Saint"],
   [/\bvs\.?\b/gi, "versus"],
-  [/\betc\.\b/gi, "etcetera"],
+  [/\betc\.\b/gi, "and so on"],
   [/\bi\.e\.\b/gi, "that is"],
   [/\be\.g\.\b/gi, "for example"],
   [/\bw\.r\.t\.\b/gi, "with respect to"],
   [/\bapprox\.\b/gi, "approximately"],
   [/\bno\.\b/gi, "number"],
+  [/\bAM\b/g, "A M"],
+  [/\bPM\b/g, "P M"],
   [/\bNCERT\b/g, "N C E R T"],
   [/\bCBSE\b/g, "C B S E"],
-  [/\bAI\b/g, "A I"],
-  [/\bIT\b/g, "I T"],
+  [/\bAI\b/g, "Artificial Intelligence"],
+  [/\bIT\b/g, "Information Technology"],
   [/\bSQL\b/g, "S Q L"],
   [/\bHTML\b/g, "H T M L"],
   [/\bCSS\b/g, "C S S"],
@@ -122,11 +124,51 @@ const ABBREVIATIONS: Array<[RegExp, string]> = [
   [/\bURL\b/g, "U R L"],
   [/\bDNA\b/g, "D N A"],
   [/\bRNA\b/g, "R N A"],
-  [/\bUSA\b/g, "U S A"],
-  [/\bUK\b/g, "U K"],
-  [/\bUN\b/g, "U N"],
+  [/\bGDP\b/g, "Gross Domestic Product"],
+  [/\bCEO\b/g, "Chief Executive Officer"],
+  [/\bUSA\b/g, "United States of America"],
+  [/\bUK\b/g, "United Kingdom"],
+  [/\bUN\b/g, "United Nations"],
+  [/\bEU\b/g, "European Union"],
   [/\bGK\b/g, "general knowledge"],
 ];
+
+// Convert numbers to spoken words (handles integers up to trillions).
+const ONES = ["zero","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"];
+const TENS = ["","","twenty","thirty","forty","fifty","sixty","seventy","eighty","ninety"];
+function intToWords(n: number): string {
+  if (n < 0) return "minus " + intToWords(-n);
+  if (n < 20) return ONES[n];
+  if (n < 100) return TENS[Math.floor(n / 10)] + (n % 10 ? " " + ONES[n % 10] : "");
+  if (n < 1000) return ONES[Math.floor(n / 100)] + " hundred" + (n % 100 ? " " + intToWords(n % 100) : "");
+  if (n < 1_000_000) return intToWords(Math.floor(n / 1000)) + " thousand" + (n % 1000 ? " " + intToWords(n % 1000) : "");
+  if (n < 1_000_000_000) return intToWords(Math.floor(n / 1_000_000)) + " million" + (n % 1_000_000 ? " " + intToWords(n % 1_000_000) : "");
+  return intToWords(Math.floor(n / 1_000_000_000)) + " billion" + (n % 1_000_000_000 ? " " + intToWords(n % 1_000_000_000) : "");
+}
+function yearToWords(y: number): string {
+  // 2000-2009 → "two thousand [x]"; 1100-1999 and 2010-2099 → paired ("nineteen ninety-nine")
+  if (y >= 2000 && y < 2010) return "two thousand" + (y % 10 ? " " + ONES[y % 10] : "");
+  if (y >= 1100 && y < 3000) {
+    const hi = Math.floor(y / 100), lo = y % 100;
+    if (lo === 0) return intToWords(hi) + " hundred";
+    return intToWords(hi) + " " + (lo < 10 ? "oh " + ONES[lo] : intToWords(lo));
+  }
+  return intToWords(y);
+}
+function numberToSpoken(numStr: string): string {
+  if (numStr.includes(".")) {
+    const [intPart, decPart] = numStr.split(".");
+    const intN = parseInt(intPart, 10);
+    if (isNaN(intN)) return numStr;
+    return intToWords(intN) + " point " + decPart.split("").map((d) => ONES[parseInt(d, 10)] || d).join(" ");
+  }
+  const n = parseInt(numStr, 10);
+  if (isNaN(n)) return numStr;
+  // Heuristic: 4-digit numbers in year range read as years.
+  if (numStr.length === 4 && n >= 1100 && n < 3000) return yearToWords(n);
+  return intToWords(n);
+}
+
 
 const SYMBOLS: Array<[RegExp, string]> = [
   [/π/g, " pi "],
