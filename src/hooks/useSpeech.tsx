@@ -249,6 +249,15 @@ export function stripForSpeech(md: string): string {
   for (const [re, rep] of SYMBOLS) t = t.replace(re, rep);
   for (const [re, rep] of ABBREVIATIONS) t = t.replace(re, rep);
 
+  // Numbers → natural speech (years, decimals, integers). Skip inside words.
+  t = t.replace(/(?<![A-Za-z\d])-?\d+(?:\.\d+)?(?![A-Za-z\d])/g, (m) => numberToSpoken(m));
+
+  // Emojis / non-speech pictographs → strip.
+  t = t.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, " ");
+  // Stray markdown / formatting characters that survived.
+  t = t.replace(/[#*_~`>]/g, " ");
+
+
   // Paragraph breaks → sentence pauses.
   t = t.replace(/\n{2,}/g, ". ");
   t = t.replace(/\n+/g, ". ");
