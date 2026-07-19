@@ -93,11 +93,12 @@ Deno.serve(async (req) => {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (subject && (subject as string).length > MAX_SUBJECT_LEN) {
+    if (subject && !ALLOWED_SUBJECTS.has(subject as string)) {
       return new Response(JSON.stringify({ error: "Invalid subject" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
     if (mode && (typeof mode !== "string" || !ALLOWED_MODES.has(mode))) {
       return new Response(JSON.stringify({ error: "Invalid mode" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
