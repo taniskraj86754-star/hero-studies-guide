@@ -17,22 +17,14 @@ export default function DiagramPanel({ initialPrompt = "" }: DiagramPanelProps) 
     const p = prompt.trim();
     if (!p) return;
     setLoading(true);
-    setImgUrl(null);
     const seed = Math.floor(Math.random() * 1_000_000);
     const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(
       p + ", clean educational diagram, labeled, high detail, white background",
     )}?width=1024&height=768&nologo=true&seed=${seed}`;
-    // Preload
-    const img = new window.Image();
-    img.onload = () => {
-      setImgUrl(url);
-      setLoading(false);
-    };
-    img.onerror = () => {
-      setLoading(false);
-    };
-    img.src = url;
+    // Set immediately — the <img> element's onLoad will clear the loading state.
+    setImgUrl(url);
   };
+
 
   const download = () => {
     if (!imgUrl) return;
