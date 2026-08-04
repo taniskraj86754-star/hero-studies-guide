@@ -400,7 +400,7 @@ const Dashboard = () => {
           )}
 
           {diagramKeywords.test(question) && (
-            <DiagramPanel initialPrompt={question} />
+            <DiagramPanel initialPrompt={question} subject={subject} />
           )}
 
           <CurrentAffairs />
