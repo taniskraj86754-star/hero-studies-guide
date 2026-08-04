@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Sparkles, LogOut, Upload, Send, Flame, Zap, Loader2, Mic, MicOff, Volume2, Square } from "lucide-react";
+import { Sparkles, LogOut, Upload, Send, Flame, Zap, Loader2, Mic, MicOff, Volume2, Square, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import SiteSEO from "@/components/SiteSEO";
 import DiagramPanel from "@/components/DiagramPanel";
@@ -177,6 +177,27 @@ const Dashboard = () => {
     supabase.from("homework_sessions").select("*").order("created_at", { ascending: false }).limit(10)
       .then(({ data }) => data && setHistory(data as any));
   }, [user]);
+
+  const deleteHistory = async (id: string) => {
+    const { error } = await supabase.from("homework_sessions").delete().eq("id", id);
+    if (error) {
+      toast.error("Could not delete history item");
+      return;
+    }
+    setHistory((h) => h.filter((s) => s.id !== id));
+    toast.success("Removed from history");
+  };
+
+  const clearHistory = async () => {
+    if (!window.confirm("Clear all recent history? This cannot be undone.")) return;
+    const { error } = await supabase.from("homework_sessions").delete().eq("user_id", user!.id);
+    if (error) {
+      toast.error("Could not clear history");
+      return;
+    }
+    setHistory([]);
+    toast.success("History cleared");
+  };
 
   const onFile = (file: File) => {
     const reader = new FileReader();
@@ -407,21 +428,44 @@ const Dashboard = () => {
         </div>
 
         <aside className="space-y-4">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Recent</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Recent</h2>
+            {history.length > 0 && (
+              <button
+                onClick={clearHistory}
+                className="text-xs text-muted-foreground hover:text-destructive transition-smooth"
+                aria-label="Clear all history"
+              >
+                Clear all
+              </button>
+            )}
+          </div>
           {history.length === 0 && <p className="text-sm text-muted-foreground">No history yet.</p>}
           <div className="space-y-2">
             {history.map((h) => (
-              <button
+              <div
                 key={h.id}
-                onClick={() => { setQuestion(h.question); setSubject(h.subject); setMode(h.mode); setAnswer(h.answer ?? ""); }}
-                className="w-full text-left bg-card rounded-2xl border border-border p-3 hover:border-primary/40 transition-smooth"
+                className="group relative bg-card rounded-2xl border border-border p-3 hover:border-primary/40 transition-smooth"
               >
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-bold text-primary">{h.subject}</span>
-                  <span className="text-xs text-muted-foreground">· {h.mode}</span>
-                </div>
-                <p className="text-sm line-clamp-2">{h.question}</p>
-              </button>
+                <button
+                  onClick={() => { setQuestion(h.question); setSubject(h.subject); setMode(h.mode); setAnswer(h.answer ?? ""); }}
+                  className="w-full text-left"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-bold text-primary">{h.subject}</span>
+                    <span className="text-xs text-muted-foreground">· {h.mode}</span>
+                  </div>
+                  <p className="text-sm line-clamp-2">{h.question}</p>
+                </button>
+                <button
+                  onClick={() => deleteHistory(h.id)}
+                  className="absolute top-2 right-2 w-6 h-6 rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-smooth"
+                  aria-label="Delete this history item"
+                  title="Delete"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
             ))}
           </div>
         </aside>
