@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Sparkles, LogOut, Upload, Send, Flame, Zap, Loader2, Mic, MicOff, Volume2, Square } from "lucide-react";
+import { Sparkles, LogOut, Upload, Send, Flame, Zap, Loader2, Mic, MicOff, Volume2, Square, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import SiteSEO from "@/components/SiteSEO";
 import DiagramPanel from "@/components/DiagramPanel";
@@ -177,6 +177,27 @@ const Dashboard = () => {
     supabase.from("homework_sessions").select("*").order("created_at", { ascending: false }).limit(10)
       .then(({ data }) => data && setHistory(data as any));
   }, [user]);
+
+  const deleteHistory = async (id: string) => {
+    const { error } = await supabase.from("homework_sessions").delete().eq("id", id);
+    if (error) {
+      toast.error("Could not delete history item");
+      return;
+    }
+    setHistory((h) => h.filter((s) => s.id !== id));
+    toast.success("Removed from history");
+  };
+
+  const clearHistory = async () => {
+    if (!window.confirm("Clear all recent history? This cannot be undone.")) return;
+    const { error } = await supabase.from("homework_sessions").delete().eq("user_id", user!.id);
+    if (error) {
+      toast.error("Could not clear history");
+      return;
+    }
+    setHistory([]);
+    toast.success("History cleared");
+  };
 
   const onFile = (file: File) => {
     const reader = new FileReader();
