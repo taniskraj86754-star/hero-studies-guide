@@ -104,6 +104,7 @@ const Dashboard = () => {
   const [answer, setAnswer] = useState("");
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<Session[]>([]);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [profile, setProfile] = useState<{ display_name: string; xp: number; streak: number } | null>(null);
 
   // Voice dictation + pronunciation
@@ -188,6 +189,30 @@ const Dashboard = () => {
     toast.success("Removed from history");
   };
 
+  const toggleSelect = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+
+  const toggleSelectAll = () =>
+    setSelected((prev) => (prev.size === history.length ? new Set() : new Set(history.map((h) => h.id))));
+
+  const deleteSelected = async () => {
+    if (selected.size === 0) return;
+    if (!window.confirm(`Delete ${selected.size} selected item${selected.size > 1 ? "s" : ""}?`)) return;
+    const ids = Array.from(selected);
+    const { error } = await supabase.from("homework_sessions").delete().in("id", ids);
+    if (error) {
+      toast.error("Could not delete selected items");
+      return;
+    }
+    setHistory((h) => h.filter((s) => !selected.has(s.id)));
+    setSelected(new Set());
+    toast.success("Selected items deleted");
+  };
+
   const clearHistory = async () => {
     if (!window.confirm("Clear all recent history? This cannot be undone.")) return;
     const { error } = await supabase.from("homework_sessions").delete().eq("user_id", user!.id);
@@ -196,6 +221,7 @@ const Dashboard = () => {
       return;
     }
     setHistory([]);
+    setSelected(new Set());
     toast.success("History cleared");
   };
 
@@ -430,43 +456,83 @@ const Dashboard = () => {
         <aside className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Recent</h2>
-            {history.length > 0 && (
-              <button
-                onClick={clearHistory}
-                className="text-xs text-muted-foreground hover:text-destructive transition-smooth"
-                aria-label="Clear all history"
-              >
-                Clear all
-              </button>
-            )}
+            <div className="flex items-center gap-3">
+              {selected.size > 0 && (
+                <button
+                  onClick={deleteSelected}
+                  className="text-xs text-destructive hover:text-destructive/80 transition-smooth font-medium"
+                  aria-label="Delete selected items"
+                >
+                  Delete selected ({selected.size})
+                </button>
+              )}
+              {history.length > 0 && (
+                <button
+                  onClick={clearHistory}
+                  className="text-xs text-muted-foreground hover:text-destructive transition-smooth"
+                  aria-label="Clear all history"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
           </div>
           {history.length === 0 && <p className="text-sm text-muted-foreground">No history yet.</p>}
+          {history.length > 0 && (
+            <div className="flex items-center gap-2 px-1">
+              <input
+                id="select-all-history"
+                type="checkbox"
+                checked={selected.size === history.length}
+                onChange={toggleSelectAll}
+                className="w-4 h-4 rounded accent-primary"
+                aria-label="Select all history items"
+              />
+              <label htmlFor="select-all-history" className="text-xs text-muted-foreground cursor-pointer select-none">
+                Select all
+              </label>
+            </div>
+          )}
           <div className="space-y-2">
-            {history.map((h) => (
-              <div
-                key={h.id}
-                className="group relative bg-card rounded-2xl border border-border p-3 hover:border-primary/40 transition-smooth"
-              >
-                <button
-                  onClick={() => { setQuestion(h.question); setSubject(h.subject); setMode(h.mode); setAnswer(h.answer ?? ""); }}
-                  className="w-full text-left"
+            {history.map((h) => {
+              const isSelected = selected.has(h.id);
+              return (
+                <div
+                  key={h.id}
+                  className={`group relative bg-card rounded-2xl border p-3 transition-smooth ${
+                    isSelected ? "border-primary ring-1 ring-primary/30" : "border-border hover:border-primary/40"
+                  }`}
                 >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-bold text-primary">{h.subject}</span>
-                    <span className="text-xs text-muted-foreground">· {h.mode}</span>
+                  <div className="flex items-start gap-2">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleSelect(h.id)}
+                      className="w-4 h-4 mt-0.5 shrink-0 rounded accent-primary"
+                      aria-label={`Select ${h.subject} question`}
+                    />
+                    <button
+                      onClick={() => { setQuestion(h.question); setSubject(h.subject); setMode(h.mode); setAnswer(h.answer ?? ""); }}
+                      className="w-full text-left"
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-bold text-primary">{h.subject}</span>
+                        <span className="text-xs text-muted-foreground">· {h.mode}</span>
+                      </div>
+                      <p className="text-sm line-clamp-2">{h.question}</p>
+                    </button>
+                    <button
+                      onClick={() => deleteHistory(h.id)}
+                      className="w-6 h-6 rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-smooth shrink-0"
+                      aria-label="Delete this history item"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-                  <p className="text-sm line-clamp-2">{h.question}</p>
-                </button>
-                <button
-                  onClick={() => deleteHistory(h.id)}
-                  className="absolute top-2 right-2 w-6 h-6 rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-smooth"
-                  aria-label="Delete this history item"
-                  title="Delete"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         </aside>
       </main>
