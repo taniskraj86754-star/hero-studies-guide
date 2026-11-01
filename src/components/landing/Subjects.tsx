@@ -1,5 +1,21 @@
 const groups = [
   {
+    title: "New NCERT Class 9 — Session 2026-27 (NEP 2020)",
+    items: [
+      { name: "Ganita Manjari (Mathematics, Parts 1 & 2)", emoji: "🧮" },
+      { name: "Exploration (Science)", emoji: "🔬" },
+      { name: "Understanding Society: India and Beyond (Social Science)", emoji: "🌏" },
+      { name: "Kaveri (English)", emoji: "📖" },
+      { name: "Ganga (Hindi)", emoji: "📗" },
+      { name: "Sharada & Risikulya (Sanskrit)", emoji: "🕉️" },
+      { name: "Jamuna (Urdu)", emoji: "🕌" },
+      { name: "Khel Praveen (Physical Education & Well-being)", emoji: "🏃" },
+      { name: "Madhurima (Arts)", emoji: "🎭" },
+      { name: "Kaushal Vikas (Skill Education)", emoji: "🛠️" },
+    ],
+  },
+  {
+
     title: "Primary (Classes 1–5)",
     items: [
       { name: "English", emoji: "📚" },
@@ -123,6 +139,12 @@ const Subjects = () => (
         {groups.map((g) => (
           <div key={g.title}>
             <h3 className="text-xl md:text-2xl font-bold mb-5">{g.title}</h3>
+            {g.title.includes("2026-27") && (
+              <p className="text-sm text-muted-foreground mb-5 max-w-3xl">
+                The brand-new NCERT textbooks that replaced the old Class 9 books this session — the AI tutor
+                teaches from these chapter lists.
+              </p>
+            )}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {g.items.map((s, i) => (
                 <div
