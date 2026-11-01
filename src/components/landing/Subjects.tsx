@@ -1,5 +1,21 @@
 const groups = [
   {
+    title: "New NCERT Class 9 — Session 2026-27 (NEP 2020)",
+    items: [
+      { name: "Ganita Manjari (Mathematics, Parts 1 & 2)", emoji: "🧮" },
+      { name: "Exploration (Science)", emoji: "🔬" },
+      { name: "Understanding Society: India and Beyond (Social Science)", emoji: "🌏" },
+      { name: "Kaveri (English)", emoji: "📖" },
+      { name: "Ganga (Hindi)", emoji: "📗" },
+      { name: "Sharada & Risikulya (Sanskrit)", emoji: "🕉️" },
+      { name: "Jamuna (Urdu)", emoji: "🕌" },
+      { name: "Khel Praveen (Physical Education & Well-being)", emoji: "🏃" },
+      { name: "Madhurima (Arts)", emoji: "🎭" },
+      { name: "Kaushal Vikas (Skill Education)", emoji: "🛠️" },
+    ],
+  },
+  {
+
     title: "Primary (Classes 1–5)",
     items: [
       { name: "English", emoji: "📚" },
